@@ -1753,11 +1753,12 @@
 
       try {
         const testReply = await callGeminiAI(val, 'Kamu adalah asisten penguji AI di DEKU AI COMPANY. Jawab dalam 1 kalimat ceria!', 'Halo, lakukan tes koneksi sistem!');
+        const activeModel = sessionStorage.getItem('deku_active_model') || localStorage.getItem('deku_active_model') || 'Gemini 3.8 Flash';
         if (resultBox) {
           resultBox.className = 'p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-emerald-200 text-xs';
-          resultBox.innerHTML = `<strong>✓ KONEKSI BERHASIL 100%!</strong><br><span class="opacity-80 mt-1 block">Respon Gemini AI: "${testReply}"</span>`;
+          resultBox.innerHTML = `<strong>✓ KONEKSI BERHASIL 100%!</strong><br><span class="text-emerald-300 font-semibold block mt-1">🤖 Model Aktif: ${activeModel}</span><span class="opacity-80 mt-1 block italic">"${testReply}"</span>`;
         }
-        alert('✓ KONEKSI BERHASIL 100%! Google Gemini AI merespons dengan sukses.');
+        alert(`✓ KONEKSI BERHASIL 100%!\nModel aktif: ${activeModel}\n\nKaryawan AI DEKU siap bekerja!`);
       } catch(err) {
         if (resultBox) {
           resultBox.className = 'p-3 rounded-xl border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs';
@@ -2447,15 +2448,6 @@
       if (!apiKey || !apiKey.trim()) throw new Error('API Key belum diisi.');
       const cleanKey = apiKey.trim();
 
-      const candidateModels = [
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-2.5-flash-preview-05-20',
-        'gemini-2.5-pro-preview-05-06'
-      ];
-
       const payload = {
         contents: [
           {
@@ -2469,10 +2461,34 @@
         }
       };
 
+      // 1. Cek apakah ada model yang sebelumnya terbukti aktif
+      const savedModel = sessionStorage.getItem('deku_active_model') || localStorage.getItem('deku_active_model');
+
+      const candidateModels = [
+        'gemini-3.8-flash',
+        'gemini-3.5-flash-lite',
+        'gemini-4-hydrogen',
+        'gemini-4-argon',
+        'gemini-4-neon',
+        'gemini-4-carbon',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash'
+      ];
+
+      if (savedModel) {
+        const cleanSaved = savedModel.replace(/^models\//, '');
+        const idx = candidateModels.indexOf(cleanSaved);
+        if (idx > -1) candidateModels.splice(idx, 1);
+        candidateModels.unshift(cleanSaved);
+      }
+
       let lastError = null;
 
-      // 1. Coba daftar kandidat model resmi yang aktif
-      for (const model of candidateModels) {
+      // 2. Coba daftar kandidat model resmi 2026
+      for (const rawModel of candidateModels) {
+        const model = rawModel.replace(/^models\//, '');
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
           const res = await fetch(url, {
@@ -2484,12 +2500,16 @@
           if (res.ok) {
             const data = await res.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) return text;
+            if (text) {
+              sessionStorage.setItem('deku_active_model', model);
+              localStorage.setItem('deku_active_model', model);
+              return text;
+            }
           } else {
             const errJson = await res.json().catch(() => ({}));
-            lastError = errJson?.error?.message || `HTTP ${res.status}`;
-            if (res.status === 404) continue; // Model ini tidak ada di akun, coba model berikutnya
-            if (res.status === 400 && lastError.includes('API_KEY_INVALID')) {
+            const errMsg = errJson?.error?.message || `HTTP ${res.status}`;
+            lastError = errMsg;
+            if (res.status === 400 && errMsg.includes('API_KEY_INVALID')) {
               throw new Error('API Key tidak valid. Pastikan Anda menyalin kode API Key yang benar dari Google AI Studio.');
             }
           }
@@ -2499,28 +2519,57 @@
         }
       }
 
-      // 2. Jika kandidat di atas belum cocok, lakukan deteksi dinamis otomatis (ListModels)
+      // 3. Jika semua kandidat gagal, lakukan Dynamic Discovery via ListModels API secara tuntas
       try {
         const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
         if (listRes.ok) {
           const listData = await listRes.json();
-          const validModel = listData.models?.find(m => m.supportedGenerationMethods?.includes('generateContent') && (m.name.includes('gemini') || m.name.includes('flash')));
-          if (validModel) {
-            const modelName = validModel.name.startsWith('models/') ? validModel.name : `models/${validModel.name}`;
-            const dynUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${cleanKey}`;
-            const dynRes = await fetch(dynUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-            if (dynRes.ok) {
-              const dynData = await dynRes.json();
-              return dynData.candidates?.[0]?.content?.parts?.[0]?.text || "Instruksi dipahami!";
+          const modelsList = (listData.models || []).filter(m => 
+            Array.isArray(m.supportedGenerationMethods) && 
+            m.supportedGenerationMethods.includes('generateContent')
+          );
+
+          // Prioritaskan model flash & gemini
+          modelsList.sort((a, b) => {
+            const aName = (a.name || '').toLowerCase();
+            const bName = (b.name || '').toLowerCase();
+            const aScore = (aName.includes('flash') ? 2 : 0) + (aName.includes('gemini') ? 1 : 0);
+            const bScore = (bName.includes('flash') ? 2 : 0) + (bName.includes('gemini') ? 1 : 0);
+            return bScore - aScore;
+          });
+
+          for (const mObj of modelsList) {
+            const mName = (mObj.name || '').replace(/^models\//, '');
+            if (!mName) continue;
+            try {
+              const dynUrl = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${cleanKey}`;
+              const dynRes = await fetch(dynUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+              if (dynRes.ok) {
+                const dynData = await dynRes.json();
+                const dynText = dynData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (dynText) {
+                  sessionStorage.setItem('deku_active_model', mName);
+                  localStorage.setItem('deku_active_model', mName);
+                  return dynText;
+                }
+              } else {
+                const dynErrJson = await dynRes.json().catch(() => ({}));
+                lastError = dynErrJson?.error?.message || `HTTP ${dynRes.status}`;
+              }
+            } catch (dynErr) {
+              lastError = dynErr.message;
             }
           }
+        } else {
+          const listErrJson = await listRes.json().catch(() => ({}));
+          lastError = listErrJson?.error?.message || `ListModels HTTP ${listRes.status}`;
         }
       } catch (discoveryErr) {
-        console.warn('Dynamic model discovery failed', discoveryErr);
+        lastError = discoveryErr.message;
       }
 
       throw new Error(lastError || 'Gagal menghubungi model Gemini. Pastikan koneksi internet dan API Key aktif.');
