@@ -592,11 +592,18 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
                 <span>Belum Terhubung</span>
               </div>
-              <button onclick="saveApiKeyOnly()" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all">
-                <span>✓</span>
-                <span>Konfirmasi & Simpan Kunci AI</span>
-              </button>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="testAiConnectionNow()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                  <span>⚡</span>
+                  <span>Test Koneksi AI</span>
+                </button>
+                <button type="button" onclick="saveApiKeyOnly()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all">
+                  <span>✓</span>
+                  <span>Konfirmasi & Simpan</span>
+                </button>
+              </div>
             </div>
+            <div id="test-ai-result-box" class="hidden p-3 rounded-xl border text-xs"></div>
           </div>
         </div>
 
@@ -1724,6 +1731,40 @@
       document.getElementById('settings-business-desc').value = AppState.company.desc;
       document.getElementById('settings-api-key').value = AppState.apiKey || '';
       updateApiKeyStatusBadge();
+    }
+
+    async function testAiConnectionNow() {
+      const input = document.getElementById('settings-api-key');
+      const val = input ? input.value.trim() : '';
+      const resultBox = document.getElementById('test-ai-result-box');
+      if (!val) {
+        alert('Silakan ketik atau tempel (paste) kode API Key terlebih dahulu di kotak input.');
+        return;
+      }
+      AppState.apiKey = val;
+      saveState();
+      updateApiKeyStatusBadge();
+
+      if (resultBox) {
+        resultBox.classList.remove('hidden');
+        resultBox.className = 'p-3 rounded-xl border border-sky-500/40 bg-sky-950/40 text-sky-200 text-xs animate-pulse';
+        resultBox.innerHTML = '⏳ Sedang menguji koneksi ke Google Gemini AI (mencoba model terbaik)...';
+      }
+
+      try {
+        const testReply = await callGeminiAI(val, 'Kamu adalah asisten penguji AI di DEKU AI COMPANY. Jawab dalam 1 kalimat ceria!', 'Halo, lakukan tes koneksi sistem!');
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-emerald-200 text-xs';
+          resultBox.innerHTML = `<strong>✓ KONEKSI BERHASIL 100%!</strong><br><span class="opacity-80 mt-1 block">Respon Gemini AI: "${testReply}"</span>`;
+        }
+        alert('✓ KONEKSI BERHASIL 100%! Google Gemini AI merespons dengan sukses.');
+      } catch(err) {
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded-xl border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs';
+          resultBox.innerHTML = `<strong>✕ GAGAL TERHUBUNG:</strong> ${err.message}`;
+        }
+        alert('Gagal AI: ' + err.message);
+      }
     }
 
     function saveApiKeyOnly() {
