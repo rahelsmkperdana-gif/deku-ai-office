@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#070b14">
+  <title>DEKU AI COMPANY — Virtual Office & Enterprise OS</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+            dark: { 950: '#04070e', 900: '#070b14', 850: '#0c1322', 800: '#111a2e', 700: '#1e293b', 600: '#334155' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Font: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js, OrbitControls & Tween.js CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; background-color: #070b14; color: #f8fafc; }
+    
+    .glass-panel {
+      background: rgba(12, 19, 34, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(17, 26, 46, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* 3D Canvas Container */
+    #canvas-container {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 5;
+    }
+
+    /* Floating 3D Agent Badge Pins in World Space */
+    .agent-3d-pin {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      pointer-events: auto;
+      cursor: pointer;
+      z-index: 20;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .agent-3d-pin:hover {
+      transform: translate(-50%, -115%) scale(1.1);
+    }
+
+    .agent-pill {
+      background: rgba(7, 11, 20, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .room-header-pill {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(12, 19, 34, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 15;
+      white-space: nowrap;
+    }
+
+    .input-field {
+      width: 100%; padding: 0.65rem 0.9rem; background-color: rgba(12, 19, 34, 0.85); border: 1px solid #1e293b;
+      border-radius: 0.75rem; color: white; font-size: 0.875rem; outline: none; transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: #6366f1; }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="flex flex-col h-screen select-none bg-[#070b14]">
+
+  <!-- ================= TOP HEADER / NAVIGATION ================= -->
+  <header class="glass-panel border-b border-dark-700/60 z-30 flex items-center justify-between px-3 py-2.5 sm:px-5 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('kantor3d')">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-sky-500 to-cyan-400 flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-indigo-500/30">
+          D
+        </div>
+        <div>
+          <h1 id="header-company-name" class="font-extrabold text-sm text-white tracking-tight flex items-center gap-1.5 leading-none">
+            DEKU.AI
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">VIRTUAL HQ</span>
+          </h1>
+          <p class="text-[10px] text-slate-400 leading-none mt-1">CEO: <span id="header-ceo-name" class="text-sky-400 font-bold">Rahel</span> • 8 AI Employees</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation Tabs (9 Menus) -->
+    <nav class="hidden lg:flex items-center gap-1 bg-dark-900/80 p-1 rounded-xl border border-dark-700/60">
+      <button onclick="switchTab('beranda')" id="nav-btn-beranda" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        📊 Beranda
+      </button>
+      <button onclick="switchTab('kantor3d')" id="nav-btn-kantor3d" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-md">
+        🏢 Kantor Virtual (3D)
+      </button>
+      <button onclick="switchTab('karyawan')" id="nav-btn-karyawan" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        👥 Karyawan
+      </button>
+      <button onclick="switchTab('proyek')" id="nav-btn-proyek" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        📁 Proyek & Tugas
+      </button>
+      <button onclick="switchTab('meeting')" id="nav-btn-meeting" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        🎙️ Meeting
+      </button>
+      <button onclick="switchTab('chat')" id="nav-btn-chat" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        💬 Chat Team
+      </button>
+      <button onclick="switchTab('statistik')" id="nav-btn-statistik" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        📈 Statistik
+      </button>
+      <button onclick="switchTab('laporan')" id="nav-btn-laporan" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        📑 Laporan
+      </button>
+      <button onclick="switchTab('pengaturan')" id="nav-btn-pengaturan" class="nav-item px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-300 hover:text-white">
+        ⚙️ Pengaturan
+      </button>
+    </nav>
+
+    <!-- Top Right: CEO Quick Action & Mobile Menu Toggle -->
+    <div class="flex items-center gap-2">
+      <button onclick="openCeoControlModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all">
+        <span>⚡</span>
+        <span class="hidden sm:inline">CEO Control</span>
+      </button>
+      <button onclick="openCreateTaskModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all">
+        <span>+</span>
+        <span class="hidden sm:inline">Tugas Baru</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT VIEWPORT ================= -->
+  <main class="flex-1 relative overflow-hidden">
+
+    <!-- 1. TAB: KANTOR VIRTUAL (3D THREE.JS WORLD) -->
+    <div id="view-kantor3d" class="tab-view absolute inset-0 block">
+      <!-- Three.js Canvas -->
+      <div id="canvas-container"></div>
+      <!-- Pins Layer -->
+      <div id="pins-layer" class="absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
+
+      <!-- 3D Story Card Overlay (Top Left) -->
+      <div class="absolute top-4 left-4 z-20 max-w-sm pointer-events-none">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-dark-950 font-extrabold text-xs tracking-tight shadow-lg mb-2 pointer-events-auto cursor-pointer" onclick="resetToOverview()">
+          <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
+          <span>deku.ai • 3D HQ</span>
+        </div>
+
+        <div class="glass-panel p-4 rounded-2xl shadow-2xl space-y-1.5 pointer-events-auto">
+          <div class="flex items-center justify-between">
+            <span id="story-tag" class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-indigo-600 text-white tracking-wide shadow-sm">
+              AGENT HQ • THE BRAIN
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">WEBGL 3D</span>
+          </div>
+          <h2 id="story-title" class="text-sm sm:text-base font-extrabold text-white leading-tight">
+            Kantor Virtual AI DEKU: Semua Staf Terhubung ke Otak AI
+          </h2>
+          <p id="story-desc" class="text-xs text-slate-300 leading-relaxed">
+            Klik karakter atau tombol di bawah untuk meluncurkan kamera ke meja kerja mereka.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3D Bottom Agent Quick Selector Bar -->
+      <div class="absolute bottom-16 sm:bottom-4 inset-x-4 max-w-4xl mx-auto z-20 flex items-center gap-2 overflow-x-auto p-2 glass-panel rounded-2xl shadow-2xl">
+        <button onclick="resetToOverview()" id="btn-overview" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-indigo-600 text-white shadow-lg flex items-center gap-1.5">
+          <span>🌐</span>
+          <span>Overview Lantai</span>
+        </button>
+        <div class="h-5 w-px bg-slate-700/60 mx-1 flex-shrink-0"></div>
+        <div id="agent-buttons-bar" class="flex items-center gap-1.5">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TAB: BERANDA (CEO EXECUTIVE DASHBOARD) -->
+    <div id="view-beranda" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Welcome Hero -->
+        <div class="glass-panel p-6 rounded-2xl border border-indigo-500/20 relative overflow-hidden">
+          <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-indigo-500/20 text-indigo-300">
+                EXECUTIVE DASHBOARD
+              </span>
+              <h2 class="text-2xl font-extrabold text-white mt-1">Selamat Bertugas, CEO <span id="dash-ceo-name">Rahel</span>! 👋</h2>
+              <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+                DEKU AI Company beroperasi penuh dengan 8 staf AI mandiri. Seluruh instruksi, pembagian tugas proyek, dan operasional ada dalam kendali penuh Anda.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="switchTab('kantor3d')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+                <span>🏢</span> Buka Kantor 3D
+              </button>
+              <button onclick="openCeoControlModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 flex items-center gap-2">
+                <span>⚡</span> Kendali Cepat
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Metrics Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="glass-card p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 font-semibold block">Total Karyawan AI</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span id="kpi-total-emp" class="text-2xl font-extrabold text-white">8</span>
+              <span class="text-[11px] font-bold text-emerald-400">100% Aktif</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+              <div class="bg-emerald-400 h-full w-full"></div>
+            </div>
+          </div>
+
+          <div class="glass-card p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 font-semibold block">Tugas Sedang Berjalan</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span id="kpi-active-tasks" class="text-2xl font-extrabold text-sky-400">3</span>
+              <span class="text-[11px] font-bold text-sky-400">On-Track</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+              <div class="bg-sky-400 h-full w-3/4"></div>
+            </div>
+          </div>
+
+          <div class="glass-card p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 font-semibold block">Menunggu Approval CEO</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span id="kpi-pending-approval" class="text-2xl font-extrabold text-amber-400">1</span>
+              <span class="text-[11px] font-bold text-amber-400">Perlu Review</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+              <div class="bg-amber-400 h-full w-1/3"></div>
+            </div>
+          </div>
+
+          <div class="glass-card p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 font-semibold block">Tugas Selesai</span>
+            <div class="flex items-baseline justify-between mt-2">
+              <span id="kpi-completed-tasks" class="text-2xl font-extrabold text-indigo-400">12</span>
+              <span class="text-[11px] font-bold text-indigo-400">+4 Minggu Ini</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+              <div class="bg-indigo-400 h-full w-5/6"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column: Active Tasks & Recent Activities -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Active Tasks List (2 cols) -->
+          <div class="lg:col-span-2 glass-panel p-5 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-dark-700/60 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🚀</span>
+                <h3 class="font-extrabold text-sm text-white">Prioritas Pekerjaan Hari Ini</h3>
+              </div>
+              <button onclick="switchTab('proyek')" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold">
+                Lihat Semua Tugas →
+              </button>
+            </div>
+            <div id="dash-active-tasks-list" class="space-y-2.5">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <!-- Activity Stream & Status Tim (1 col) -->
+          <div class="glass-panel p-5 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-dark-700/60 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-base">⚡</span>
+                <h3 class="font-extrabold text-sm text-white">Log Aktivitas Tim Terkini</h3>
+              </div>
+            </div>
+            <div id="dash-activity-log" class="space-y-3 text-xs max-h-80 overflow-y-auto pr-1">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TAB: KARYAWAN (EMPLOYEE DIRECTORY & PROFILES) -->
+    <div id="view-karyawan" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700/60 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>👥</span> Direktori 8 Karyawan AI DEKU
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Setiap staf memiliki spesialisasi peran, kepribadian otonom, dan ruang kerja tersendiri.</p>
+          </div>
+          <button onclick="openAddEmployeeModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 self-start sm:self-auto">
+            <span>+</span> Tambah Karyawan Baru
+          </button>
+        </div>
+
+        <div id="employees-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. TAB: PROYEK & TUGAS (KANBAN & TASK MANAGEMENT) -->
+    <div id="view-proyek" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700/60 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>📁</span> Manajemen Tugas & Proyek
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Kontrol siklus kerja mulai dari perencanaan tugas, kolaborasi, hingga persetujuan akhir CEO.</p>
+          </div>
+          <button onclick="openCreateTaskModal()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 self-start sm:self-auto">
+            <span>+</span> Buat Tugas Baru
+          </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2">
+          <button onclick="filterTasks('semua')" id="filter-btn-semua" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white">Semua</button>
+          <button onclick="filterTasks('baru')" id="filter-btn-baru" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Baru</button>
+          <button onclick="filterTasks('sedang_dikerjakan')" id="filter-btn-sedang_dikerjakan" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Sedang Dikerjakan</button>
+          <button onclick="filterTasks('kolaborasi')" id="filter-btn-kolaborasi" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Menunggu Kolaborasi</button>
+          <button onclick="filterTasks('menunggu_approval')" id="filter-btn-menunggu_approval" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Menunggu Approval CEO</button>
+          <button onclick="filterTasks('revisi')" id="filter-btn-revisi" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Butuh Revisi</button>
+          <button onclick="filterTasks('selesai')" id="filter-btn-selesai" class="task-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-dark-850">Selesai</button>
+        </div>
+
+        <!-- Task Cards Grid -->
+        <div id="tasks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. TAB: MEETING (VIRTUAL MEETING ROOM) -->
+    <div id="view-meeting" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700/60 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>🎙️</span> Ruang Meeting Virtual CEO & Tim AI
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Gelar rapat strategis dengan memanggil staf AI tertentu atau seluruh tim sekaligus.</p>
+          </div>
+          <button onclick="startNewMeetingFlow()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-2">
+            <span>+</span> Mulai Rapat Baru
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Active Meeting Console (2 cols) -->
+          <div class="lg:col-span-2 glass-panel p-5 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-dark-700/60 pb-3">
+              <div>
+                <span class="text-[10px] font-bold uppercase text-indigo-400 block" id="meeting-status-badge">SESI AKTIF</span>
+                <h3 id="meeting-current-topic" class="font-extrabold text-base text-white">Review Sprint & Desain V2.0</h3>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-slate-400 font-mono" id="meeting-attendees-chips">
+                <!-- Avatars of attending employees -->
+              </div>
+            </div>
+
+            <!-- Dialogue transcript -->
+            <div id="meeting-transcript-box" class="h-80 overflow-y-auto space-y-3 p-3 bg-dark-950/80 rounded-xl border border-dark-700/80 text-xs">
+              <!-- Populated via JS -->
+            </div>
+
+            <!-- Discussion Trigger Input -->
+            <form id="meeting-input-form" onsubmit="handleSendMeetingPrompt(event)" class="flex gap-2">
+              <input
+                id="meeting-prompt-input"
+                type="text"
+                placeholder="Tanyakan pendapat tim atau beri arahan meeting..."
+                class="input-field text-xs flex-1"
+                autocomplete="off"
+              />
+              <button type="submit" id="meeting-send-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md">
+                Bahas
+              </button>
+            </form>
+          </div>
+
+          <!-- Meeting Minutes & Saved Summaries (1 col) -->
+          <div class="glass-panel p-5 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-dark-700/60 pb-3">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <span>📝</span> Notulensi & Riwayat Rapat
+              </h3>
+            </div>
+            <div id="meeting-summaries-list" class="space-y-3 text-xs max-h-96 overflow-y-auto pr-1">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. TAB: CHAT TEAM (DIRECT AI CHAT & GENERAL COLLABORATION) -->
+    <div id="view-chat" class="tab-view absolute inset-0 hidden p-3 sm:p-5 bg-[#070b14]">
+      <div class="max-w-7xl mx-auto h-full flex glass-panel rounded-2xl border border-dark-700/70 overflow-hidden">
+        <!-- Sidebar Channel List -->
+        <div class="w-64 sm:w-72 border-r border-dark-700/70 flex flex-col bg-dark-900/60">
+          <div class="p-3 border-b border-dark-700/70 flex items-center justify-between">
+            <h3 class="font-extrabold text-xs text-white uppercase tracking-wider">Komunikasi Tim</h3>
+            <span class="text-[10px] text-sky-400 font-mono">8 ONLINE</span>
+          </div>
+
+          <div class="p-2 space-y-1 overflow-y-auto flex-1 text-xs" id="chat-channels-list">
+            <!-- Channel List Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Chat Conversation Area -->
+        <div class="flex-1 flex flex-col bg-dark-950/50">
+          <!-- Active Chat Header -->
+          <div class="p-3 border-b border-dark-700/70 flex items-center justify-between bg-dark-900/40">
+            <div class="flex items-center gap-3">
+              <div id="chat-header-avatar" class="w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-indigo-600 shadow-md">
+                💬
+              </div>
+              <div>
+                <h4 id="chat-header-name" class="font-bold text-sm text-white">#general-kolaborasi</h4>
+                <p id="chat-header-desc" class="text-[11px] text-slate-400">Saluran pertukaran tugas & koordinasi lintas divisi</p>
+              </div>
+            </div>
+            <button onclick="switchTab('kantor3d')" class="text-xs text-sky-400 hover:text-sky-300 font-bold px-2 py-1 rounded-lg bg-dark-800 border border-slate-700">
+              Lihat di 3D ↗
+            </button>
+          </div>
+
+          <!-- Messages Scrollable -->
+          <div id="team-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+            <!-- Messages populated via JS -->
+          </div>
+
+          <!-- Chat Input -->
+          <form id="team-chat-form" onsubmit="handleSendTeamChat(event)" class="p-3 border-t border-dark-700/70 bg-dark-900/40 flex gap-2">
+            <input
+              id="team-chat-input"
+              type="text"
+              placeholder="Tulis pesan atau instruksi..."
+              class="input-field text-xs flex-1"
+              autocomplete="off"
+            />
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md">
+              Kirim
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. TAB: STATISTIK (COMPANY ANALYTICS) -->
+    <div id="view-statistik" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="border-b border-dark-700/60 pb-4">
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <span>📈</span> Analitik & Performa Perusahaan
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Tinjauan produktivitas tim, alokasi beban divisi, dan efisiensi penyelesaian proyek DEKU AI.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="glass-panel p-5 rounded-2xl space-y-3">
+            <h3 class="font-bold text-sm text-white">Distribusi Beban Kerja per Divisi</h3>
+            <div id="stats-dept-bars" class="space-y-2.5 text-xs">
+              <!-- Department workloads -->
+            </div>
+          </div>
+
+          <div class="glass-panel p-5 rounded-2xl space-y-3">
+            <h3 class="font-bold text-sm text-white">Status Penyelesaian Tugas</h3>
+            <div id="stats-task-breakdown" class="space-y-3 text-xs">
+              <!-- Task status percentages -->
+            </div>
+          </div>
+
+          <div class="glass-panel p-5 rounded-2xl space-y-3">
+            <h3 class="font-bold text-sm text-white">Skor Produktivitas Staf AI</h3>
+            <div id="stats-employee-leaderboard" class="space-y-2.5 text-xs max-h-72 overflow-y-auto">
+              <!-- Employee productivity rankings -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. TAB: LAPORAN (FORMAL WORK DELIVERABLES & APPROVALS) -->
+    <div id="view-laporan" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700/60 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>📑</span> Laporan & Hasil Pekerjaan Tim
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Setiap tugas yang rampung diajukan ke sini untuk mendapatkan persetujuan atau catatan revisi dari CEO.</p>
+          </div>
+        </div>
+
+        <div id="reports-list-container" class="space-y-4">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. TAB: PENGATURAN (SYSTEM CONFIGURATION) -->
+    <div id="view-pengaturan" class="tab-view absolute inset-0 hidden overflow-y-auto p-4 sm:p-6 bg-[#070b14]">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <div class="border-b border-dark-700/60 pb-4">
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <span>⚙️</span> Pengaturan Sistem & Kustomisasi Kantor
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Sesuaikan identitas perusahaan, konfigurasi AI, serta kelola staf kantor secara dinamis.</p>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl space-y-5">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-dark-700/60 pb-2">
+            <span>🤖</span> Integrasi Kecerdasan Buatan (Google Gemini API)
+          </h3>
+          <div class="space-y-2 text-xs">
+            <label class="block text-slate-300 font-bold">Google Gemini API Key (Gratis)</label>
+            <input
+              id="settings-api-key"
+              type="password"
+              placeholder="AIzaSy..."
+              class="input-field font-mono"
+            />
+            <p class="text-[11px] text-slate-400">
+              Dapatkan API Key secara gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Jika dikosongkan, chat akan berjalan dalam mode simulasi cerdas bawaan.
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl space-y-5">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-dark-700/60 pb-2">
+            <span>🏢</span> Identitas Perusahaan & CEO
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-slate-300 font-bold mb-1">Nama Perusahaan</label>
+              <input id="settings-company-name" type="text" class="input-field" />
+            </div>
+            <div>
+              <label class="block text-slate-300 font-bold mb-1">Nama CEO</label>
+              <input id="settings-ceo-name" type="text" class="input-field" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-slate-300 font-bold mb-1">Deskripsi Bisnis</label>
+              <textarea id="settings-business-desc" rows="2" class="input-field"></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button onclick="saveCompanySettings()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg">
+              Simpan Identitas
+            </button>
+          </div>
+        </div>
+
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-dark-700/60 pb-2">
+            <span>💾</span> Manajemen Data & Reset
+          </h3>
+          <p class="text-xs text-slate-400">Seluruh data (proyek, meeting, chat, staf) tersimpan otomatis di browser lokal Anda.</p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="exportDataJson()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700">
+              📥 Backup / Export Data JSON
+            </button>
+            <button onclick="resetDefaultData()" class="px-4 py-2 bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 text-xs font-bold rounded-xl border border-rose-800/60">
+              ⚠️ Reset ke Data Default
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= MOBILE BOTTOM NAVIGATION (FOR PHONES) ================= -->
+  <div class="lg:hidden glass-panel border-t border-dark-700/80 z-30 flex items-center justify-around py-2 px-1 text-[10px] font-bold">
+    <button onclick="switchTab('beranda')" id="m-nav-beranda" class="flex flex-col items-center gap-1 text-slate-400">
+      <span>📊</span> Beranda
+    </button>
+    <button onclick="switchTab('kantor3d')" id="m-nav-kantor3d" class="flex flex-col items-center gap-1 text-indigo-400">
+      <span>🏢</span> Kantor 3D
+    </button>
+    <button onclick="switchTab('proyek')" id="m-nav-proyek" class="flex flex-col items-center gap-1 text-slate-400">
+      <span>📁</span> Proyek
+    </button>
+    <button onclick="switchTab('meeting')" id="m-nav-meeting" class="flex flex-col items-center gap-1 text-slate-400">
+      <span>🎙️</span> Meeting
+    </button>
+    <button onclick="switchTab('chat')" id="m-nav-chat" class="flex flex-col items-center gap-1 text-slate-400">
+      <span>💬</span> Chat
+    </button>
+    <button onclick="switchTab('pengaturan')" id="m-nav-pengaturan" class="flex flex-col items-center gap-1 text-slate-400">
+      <span>⚙️</span> Setup
+    </button>
+  </div>
+
+  <!-- ================= MODAL: CEO CONTROL SYSTEM (MULTI-SELECT COMMAND) ================= -->
+  <div id="modal-ceo-control" class="fixed inset-0 bg-dark-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel bg-[#0c1424] border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-dark-700 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚡</span>
+          <div>
+            <h3 class="font-extrabold text-base text-white">CEO Control Center</h3>
+            <p class="text-[11px] text-slate-400">Kirim instruksi massal atau panggil tim ke ruang meeting</p>
+          </div>
+        </div>
+        <button onclick="closeCeoControlModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-bold mb-1.5">Pilih Karyawan AI:</label>
+          <div class="flex gap-2 mb-2">
+            <button onclick="selectAllEmployees(true)" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 font-bold text-[10px]">
+              Pilih Semua (8)
+            </button>
+            <button onclick="selectDeptEmployees('IT')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[10px]">
+              Divisi Tech
+            </button>
+            <button onclick="selectDeptEmployees('Kreatif')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[10px]">
+              Divisi Kreatif
+            </button>
+            <button onclick="selectAllEmployees(false)" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 font-bold text-[10px]">
+              Kosongkan
+            </button>
+          </div>
+
+          <div id="ceo-employee-chips" class="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-2 bg-dark-950/70 rounded-xl border border-dark-700/80">
+            <!-- Checkbox chips populated via JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Instruksi CEO Rahel</label>
+          <textarea
+            id="ceo-instruction-text"
+            rows="3"
+            placeholder="Ketik instruksi penting untuk karyawan terpilih..."
+            class="input-field"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <button onclick="summonSelectedToMeeting()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-md flex items-center gap-1.5">
+            <span>🎙️</span> Panggil ke Meeting
+          </button>
+          <button onclick="dispatchCeoInstruction()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg flex items-center gap-1.5">
+            <span>🚀</span> Kirim Instruksi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CREATE NEW TASK ================= -->
+  <div id="modal-create-task" class="fixed inset-0 bg-dark-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel bg-[#0c1424] border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-dark-700 pb-3">
+        <h3 class="font-extrabold text-base text-white flex items-center gap-2">
+          <span>📁</span> Buat Tugas Proyek Baru
+        </h3>
+        <button onclick="closeCreateTaskModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <form id="create-task-form" onsubmit="handleSaveNewTask(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Judul Tugas</label>
+          <input id="task-input-title" type="text" required placeholder="Contoh: Desain Landing Page DEKU V2.0" class="input-field" />
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Deskripsi & Tujuan</label>
+          <textarea id="task-input-desc" required rows="2" placeholder="Jelaskan detail tujuan dan output yang diinginkan..." class="input-field"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Prioritas</label>
+            <select id="task-input-priority" class="input-field">
+              <option value="Tinggi">🔥 Tinggi (High)</option>
+              <option value="Sedang" selected>⚡ Sedang (Medium)</option>
+              <option value="Rendah">🌱 Rendah (Low)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">Tenggat Waktu (Deadline)</label>
+            <input id="task-input-deadline" type="text" placeholder="Contoh: Hari Ini 18:00" class="input-field" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Tugaskan Kepada (Pilih Staf):</label>
+          <div id="task-assignees-selection" class="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-32 overflow-y-auto p-2 bg-dark-950/70 rounded-xl border border-dark-700/80">
+            <!-- Checkboxes populated via JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Hasil yang Diharapkan (Deliverable)</label>
+          <input id="task-input-deliverable" type="text" placeholder="Contoh: File Figma mockup + Komponen React" class="input-field" />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeCreateTaskModal()" class="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg">Tugaskan Sekarang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: 3D INDIVIDUAL EMPLOYEE INTERACTION & CHAT ================= -->
+  <div id="modal-employee-chat" class="fixed inset-0 bg-dark-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel bg-[#0c1424] border border-slate-700/80 rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-dark-700/80 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div id="emp-modal-avatar" class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-lg border border-white/20">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="emp-modal-name" class="text-base font-extrabold text-white">Midoriya</h3>
+              <span id="emp-modal-room" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-slate-800 text-sky-400">
+                PROJECT MANAGER
+              </span>
+            </div>
+            <p id="emp-modal-role" class="text-xs text-slate-300 font-semibold">Team Leader & PM</p>
+          </div>
+        </div>
+        <button onclick="closeEmployeeModal()" class="text-slate-400 hover:text-white p-2 text-lg">✕</button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-3 text-xs">
+        <div class="p-3 rounded-xl bg-dark-900 border border-slate-800 flex items-start gap-2.5">
+          <span class="text-sky-400 text-base mt-0.5">💼</span>
+          <div>
+            <span class="font-bold text-white block">Status Aktivitas:</span>
+            <p id="emp-modal-activity" class="text-slate-300 mt-0.5"></p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40 text-indigo-200 italic flex items-start gap-2">
+          <span>💬</span>
+          <p id="emp-modal-dialog" class="flex-1"></p>
+        </div>
+
+        <div id="emp-chat-box" class="border border-slate-800 rounded-xl bg-slate-950/80 p-3 h-44 overflow-y-auto space-y-2">
+          <!-- Direct messages -->
+        </div>
+
+        <div id="emp-chat-loading" class="hidden text-[11px] text-sky-400 italic flex items-center gap-2 animate-pulse">
+          <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+          <span id="emp-loading-text">Sedang memproses instruksi CEO Rahel...</span>
+        </div>
+      </div>
+
+      <form id="emp-chat-form" onsubmit="handleSendDirectInstruction(event)" class="p-3 border-t border-slate-800 bg-dark-900/60 flex gap-2">
+        <input
+          id="emp-chat-input"
+          type="text"
+          placeholder="Beri instruksi langsung..."
+          class="input-field text-xs flex-1"
+          autocomplete="off"
+        />
+        <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md">
+          Kirim
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT: MASTER ENGINE & PERSISTENCE ================= -->
+  <script>
+    // ================= INITIAL STATE & DATA =================
+    const STORAGE_KEY = 'deku_ai_master_state_v2';
+
+    const DEFAULT_EMPLOYEES = [
+      {
+        id: 'midoriya',
+        name: 'Midoriya',
+        role: 'Team Leader & PM',
+        room: 'PROJECT MANAGER',
+        dept: 'Tech',
+        color: 0x38bdf8,
+        hex: '#38bdf8',
+        wallColor: 0x0284c7,
+        floorColor: 0x075985,
+        emoji: '⚡',
+        hairColor: 0x166534,
+        pos: { x: -14, y: 0.5, z: 2 },
+        skills: ['Project Management', 'Agile/Scrum', 'Task Breakdown', 'Coordination'],
+        status: 'Bekerja',
+        activity: 'Menyaring panduan & delegasi tugas ke tim',
+        dialog: 'Siap deploy v2.0! Semua modul sudah melalui QC dan siap diluncurkan.',
+        systemPrompt: 'Kamu adalah Midoriya, Team Leader di DEKU AI COMPANY. CEO kamu adalah Rahel. Karaktermu antusias, analitis, dan suka breakdown proyek ke anggota tim (Asta, Lufas, Ajeng, L, Dhani, Zenon, Cahyara). Jawab selalu solutif dan profesional!'
+      },
+      {
+        id: 'asta',
+        name: 'Asta',
+        role: 'IT & Infrastructure',
+        room: 'IT & DEVOPS',
+        dept: 'Tech',
+        color: 0x60a5fa,
+        hex: '#60a5fa',
+        wallColor: 0x2563eb,
+        floorColor: 0x1e3a8a,
+        emoji: '🔧',
+        hairColor: 0x94a3b8,
+        pos: { x: -11, y: 0.5, z: -9 },
+        skills: ['DevOps', 'Cloud Server', 'PostgreSQL', 'API Gateway', 'Security'],
+        status: 'Bekerja',
+        activity: 'Memantau beban server & koneksi API',
+        dialog: 'Server DB load cuma 8%, latensi 12ms. Infrastruktur aman terkendali! YOSH!',
+        systemPrompt: 'Kamu adalah Asta, IT Specialist di DEKU AI COMPANY. Karaktermu pantang menyerah, sangat energik, menggunakan huruf kapital untuk seruan semangat seperti "YOSH!". Kamu ahli dalam server, database, dan DevOps.'
+      },
+      {
+        id: 'lufas',
+        name: 'Lufas',
+        role: 'Creative Director',
+        room: 'UI/UX DESIGN',
+        dept: 'Kreatif',
+        color: 0xc084fc,
+        hex: '#c084fc',
+        wallColor: 0x9333ea,
+        floorColor: 0x581c87,
+        emoji: '🎨',
+        hairColor: 0xa855f7,
+        pos: { x: 12, y: 0.5, z: -9 },
+        skills: ['Design System', 'UI/UX High-Fidelity', 'Figma', 'Visual Hierarchy'],
+        status: 'Bekerja',
+        activity: 'Merancang design system & palet warna futuristik',
+        dialog: 'Palet warna pastel dan kontras dark slate ini menghasilkan estetika yang sangat clean.',
+        systemPrompt: 'Kamu adalah Lufas, Creative Director di DEKU AI COMPANY. Karaktermu berjiwa seni tinggi, anggun, perfeksionis pada estetika visual. Kamu ahli dalam warna, tipografi, moodboard, branding, dan UI/UX modern.'
+      },
+      {
+        id: 'ajeng',
+        name: 'Ajeng',
+        role: 'Head Copywriter',
+        room: 'CONTENT ANALYST',
+        dept: 'Kreatif',
+        color: 0xf472b6,
+        hex: '#f472b6',
+        wallColor: 0xdb2777,
+        floorColor: 0x831843,
+        emoji: '✍️',
+        hairColor: 0x1e293b,
+        pos: { x: -4, y: 0.5, z: -14 },
+        skills: ['Storytelling', 'High-Converting Copy', 'Scriptwriting', 'SEO Content'],
+        status: 'Bekerja',
+        activity: 'Mencari insight copywriting & naskah konversi tinggi',
+        dialog: 'Tiap naskah sudah disaring: copywriting, humanizer, sampai hook video ada standarnya.',
+        systemPrompt: 'Kamu adalah Ajeng, Head Copywriter di DEKU AI COMPANY. Karaktermu tenang, teliti, cerdas, dan ahli merangkai kata persuasif berkelas tinggi. Tuliskan naskah iklan, artikel SEO, tagline, atau body text website yang memikat emosi pembaca.'
+      },
+      {
+        id: 'cahyara',
+        name: 'Cahyara',
+        role: 'Lead Illustrator',
+        room: 'BRAINSTORMING',
+        dept: 'Kreatif',
+        color: 0xfacc15,
+        hex: '#facc15',
+        wallColor: 0xca8a04,
+        floorColor: 0x713f12,
+        emoji: '🖌️',
+        hairColor: 0xd97706,
+        pos: { x: 5, y: 0.5, z: -14 },
+        skills: ['Digital Painting', 'Character Design', 'Isometric Illustration', 'Storyboarding'],
+        status: 'Bekerja',
+        activity: 'Ilustrasi karakter & sketsa visual ide baru',
+        dialog: 'Konsep artwork karakter maskot baru sudah rampung, siap dicek oleh Lufas.',
+        systemPrompt: 'Kamu adalah Cahyara, Ilustrator di DEKU AI COMPANY. Karaktermu lembut, puitis, dan penuh imajinasi naratif.'
+      },
+      {
+        id: 'dhani',
+        name: 'Dhani',
+        role: 'Graphic Designer',
+        room: 'KREATIF & ASSET',
+        dept: 'Kreatif',
+        color: 0x2dd4bf,
+        hex: '#2dd4bf',
+        wallColor: 0x0d9488,
+        floorColor: 0x134e4a,
+        emoji: '🖼️',
+        hairColor: 0x0f766e,
+        pos: { x: 14, y: 0.5, z: 2 },
+        skills: ['Marketing Assets', 'Social Media Feeds', 'Vector Graphic', 'Layouting'],
+        status: 'Bekerja',
+        activity: 'Membuat grafis promo & visual branding',
+        dialog: 'Semua aset vektor dan banner rasio 1:1 dan 16:9 sudah selesai diexport.',
+        systemPrompt: 'Kamu adalah Dhani, Graphic Designer di DEKU AI COMPANY. Karaktermu sangat teliti pada alignment, grid, dan pixel perfection.'
+      },
+      {
+        id: 'l',
+        name: 'L',
+        role: 'Web Creator',
+        room: 'BUSINESS ANALYST',
+        dept: 'Tech',
+        color: 0xa3e635,
+        hex: '#a3e635',
+        wallColor: 0x65a30d,
+        floorColor: 0x365314,
+        emoji: '🌐',
+        hairColor: 0x09090b,
+        pos: { x: -6, y: 0.5, z: 12 },
+        skills: ['Frontend Architecture', 'React/Next.js', 'Tailwind CSS', 'Interactive Canvas'],
+        status: 'Bekerja',
+        activity: 'Koding arsitektur frontend web fungsional',
+        dialog: '...Komponen web sudah responsif dan lolos testing cross-browser.',
+        systemPrompt: 'Kamu adalah L, Web Creator jenius di DEKU AI COMPANY. Karaktermu misterius, pendiam, bicara singkat to the point ("...Instruksi dipahami."). Kamu menulis kode HTML, CSS, JavaScript, Tailwind, atau React fungsional, bersih, dan modern.'
+      },
+      {
+        id: 'zenon',
+        name: 'Zenon',
+        role: 'Video & Motion',
+        room: 'VIDEO EDITOR',
+        dept: 'Kreatif',
+        color: 0xfb923c,
+        hex: '#fb923c',
+        wallColor: 0xea580c,
+        floorColor: 0x7c2d12,
+        emoji: '🎬',
+        hairColor: 0xc2410c,
+        pos: { x: 7, y: 0.5, z: 12 },
+        skills: ['Motion Graphics', 'Short-Form Video', 'Lottie Animations', 'Sound FX'],
+        status: 'Bekerja',
+        activity: 'Render animasi motion lottie & transisi video',
+        dialog: 'Hook 3 detik pertama video sudah diselaraskan dengan aturan naskah Ajeng.',
+        systemPrompt: 'Kamu adalah Zenon, Motion Graphic & Animator di DEKU AI COMPANY. Karaktermu penuh energi, visualis, dan sinematik.'
+      }
+    ];
+
+    const DEFAULT_TASKS = [
+      {
+        id: 'tsk-101',
+        title: 'Desain & Implementasi Virtual Office 3D',
+        desc: 'Membangun antarmuka kantor virtual 3D Three.js dan integrasi 8 karyawan AI.',
+        priority: 'Tinggi',
+        status: 'menunggu_approval',
+        deadline: 'Hari Ini 18:00',
+        assignedTo: ['lufas', 'l', 'zenon'],
+        deliverable: 'Web Canvas 3D Three.js dengan kontrol isometrik dan dialog modal.',
+        ceoFeedback: ''
+      },
+      {
+        id: 'tsk-102',
+        title: 'Optimasi Server & Database Latency',
+        desc: 'Konfigurasi caching Redis dan perbaiki query database beban tinggi.',
+        priority: 'Tinggi',
+        status: 'sedang_dikerjakan',
+        deadline: 'Besok 12:00',
+        assignedTo: ['asta'],
+        deliverable: 'Laporan latensi di bawah 20ms dan uptime 99.9%.',
+        ceoFeedback: ''
+      },
+      {
+        id: 'tsk-103',
+        title: 'Naskah Promosi & Tagline Kampanye AI',
+        desc: 'Menulis 5 variasi hook copywriting dan naskah video TikTok berkonversi tinggi.',
+        priority: 'Sedang',
+        status: 'kolaborasi',
+        deadline: 'Lusa 15:00',
+        assignedTo: ['ajeng', 'cahyara', 'dhani'],
+        deliverable: 'Dokumen naskah + visual draft poster feed Instagram.',
+        ceoFeedback: ''
+      }
+    ];
+
+    const DEFAULT_MEETINGS = [
+      {
+        id: 'mtg-1',
+        topic: 'Peluncuran Sistem Kantor Virtual DEKU AI',
+        date: '23 Nov 2026, 09:00',
+        attendees: ['midoriya', 'asta', 'lufas', 'l'],
+        summary: 'Penyelarasan arsitektur 3D WebGL dan integrasi kontrol CEO. Semua divisi siap deployment.',
+        transcript: [
+          { speaker: 'CEO Rahel', text: 'Selamat pagi tim. Bagaimana kesiapan peluncuran kantor virtual 3D kita hari ini?' },
+          { speaker: 'Midoriya', text: 'Lapor CEO Rahel, seluruh 8 modul telah diselaraskan. Lufas dan L sudah menyelesaikan visual 3D.' },
+          { speaker: 'Lufas', text: 'Tampilan 3D isometrik dengan inti THE BRAIN dan ruangan modular pastel sudah sempurna.' },
+          { speaker: 'Asta', text: 'Infrastruktur dan API connection stabil 100%! YOSH!' }
+        ]
+      }
+    ];
+
+    const DEFAULT_REPORTS = [
+      {
+        id: 'rep-1',
+        taskId: 'tsk-101',
+        taskTitle: 'Desain & Implementasi Virtual Office 3D',
+        submittedBy: 'lufas',
+        date: '23 Nov 2026, 04:30',
+        status: 'Menunggu Persetujuan',
+        summary: 'Kami telah merampungkan pembuatan render 3D Three.js WebGL lengkap dengan inti orbital THE BRAIN, meja, kursi, tanaman, karakter 3D mini, dan pencahayaan studio.',
+        deliverableLink: 'D:/deku-ai-office/index.html'
+      }
+    ];
+
+    const DEFAULT_ACTIVITIES = [
+      { id: 1, text: 'Lufas mengajukan laporan pekerjaan "Desain & Implementasi Virtual Office 3D".', time: '10 menit lalu', type: 'report' },
+      { id: 2, text: 'Asta memantau latensi server: 12ms stabil.', time: '25 menit lalu', type: 'system' },
+      { id: 3, text: 'Ajeng dan Cahyara memulai kolaborasi naskah dan ilustrasi promosi.', time: '40 menit lalu', type: 'collab' },
+      { id: 4, text: 'Midoriya memperbarui sprint board ke versi 2.0.', time: '1 jam lalu', type: 'task' }
+    ];
+
+    // ================= STATE HOLDER =================
+    let AppState = {
+      company: { name: 'DEKU.AI COMPANY', ceo: 'Rahel', desc: 'Perusahaan teknologi AI Virtual Office masa depan.' },
+      apiKey: '',
+      employees: DEFAULT_EMPLOYEES,
+      tasks: DEFAULT_TASKS,
+      meetings: DEFAULT_MEETINGS,
+      reports: DEFAULT_REPORTS,
+      activities: DEFAULT_ACTIVITIES,
+      chats: {}
+    };
+
+    // Load from local storage
+    function loadSavedState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          AppState = { ...AppState, ...parsed };
+        } catch (e) {
+          console.error('Failed to parse saved state, using default', e);
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+      updateKpisAndBadges();
+    }
+
+    // ================= NAVIGATION MANAGER =================
+    let currentTab = 'kantor3d';
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+
+      // Hide all tabs
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      const activeEl = document.getElementById(`view-${tabId}`);
+      if (activeEl) activeEl.classList.remove('hidden');
+
+      // Update Desktop Nav styles
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+        btn.classList.add('text-slate-300');
+      });
+      const activeBtn = document.getElementById(`nav-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+        activeBtn.classList.remove('text-slate-300');
+      }
+
+      // Update Mobile Nav styles
+      document.querySelectorAll('[id^="m-nav-"]').forEach(btn => btn.classList.replace('text-indigo-400', 'text-slate-400'));
+      const mActiveBtn = document.getElementById(`m-nav-${tabId}`);
+      if (mActiveBtn) mActiveBtn.classList.replace('text-slate-400', 'text-indigo-400');
+
+      // Trigger specific tab renders
+      if (tabId === 'beranda') renderDashboard();
+      if (tabId === 'karyawan') renderEmployeesDirectory();
+      if (tabId === 'proyek') renderTasksList();
+      if (tabId === 'meeting') renderMeetingTab();
+      if (tabId === 'chat') renderTeamChatView();
+      if (tabId === 'statistik') renderStatistics();
+      if (tabId === 'laporan') renderReportsList();
+      if (tabId === 'pengaturan') renderSettingsTab();
+
+      // Trigger Three.js resize if switching to 3D
+      if (tabId === 'kantor3d') {
+        setTimeout(onWindowResize, 50);
+      }
+    }
+
+    // ================= KPI & BADGE UPDATES =================
+    function updateKpisAndBadges() {
+      document.getElementById('header-company-name').innerHTML = `
+        ${AppState.company.name}
+        <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-bold">VIRTUAL HQ</span>
+      `;
+      document.getElementById('header-ceo-name').textContent = AppState.company.ceo;
+      const dashCeo = document.getElementById('dash-ceo-name');
+      if (dashCeo) dashCeo.textContent = AppState.company.ceo;
+
+      const totalEmp = AppState.employees.length;
+      const activeTasks = AppState.tasks.filter(t => t.status === 'sedang_dikerjakan' || t.status === 'kolaborasi').length;
+      const pendingApproval = AppState.tasks.filter(t => t.status === 'menunggu_approval').length;
+      const completedTasks = AppState.tasks.filter(t => t.status === 'selesai').length;
+
+      const elTotal = document.getElementById('kpi-total-emp');
+      if (elTotal) elTotal.textContent = totalEmp;
+      const elActive = document.getElementById('kpi-active-tasks');
+      if (elActive) elActive.textContent = activeTasks;
+      const elPending = document.getElementById('kpi-pending-approval');
+      if (elPending) elPending.textContent = pendingApproval;
+      const elCompleted = document.getElementById('kpi-completed-tasks');
+      if (elCompleted) elCompleted.textContent = completedTasks;
+    }
+
+    // ================= TAB 1: BERANDA (DASHBOARD) =================
+    function renderDashboard() {
+      updateKpisAndBadges();
+
+      // Render Active Tasks
+      const listEl = document.getElementById('dash-active-tasks-list');
+      const activeTasks = AppState.tasks.filter(t => t.status !== 'selesai');
+      if (activeTasks.length === 0) {
+        listEl.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs italic">Tidak ada tugas aktif. Buat tugas baru menggunakan tombol di atas!</div>`;
+      } else {
+        listEl.innerHTML = activeTasks.map(t => {
+          const assigneesHtml = t.assignedTo.map(empId => {
+            const emp = AppState.employees.find(e => e.id === empId);
+            return emp ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-dark-800 border border-slate-700 text-slate-200"><span>${emp.emoji}</span><span>${emp.name}</span></span>` : '';
+          }).join('');
+
+          let badgeColor = 'bg-sky-500/20 text-sky-300 border-sky-500/30';
+          if (t.status === 'menunggu_approval') badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+          if (t.status === 'kolaborasi') badgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+
+          return `
+            <div class="p-3.5 rounded-xl bg-dark-900/80 border border-dark-700/60 hover:border-indigo-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase border ${badgeColor}">
+                    ${t.status.replace('_', ' ')}
+                  </span>
+                  <span class="text-xs font-bold text-white">${t.title}</span>
+                </div>
+                <p class="text-[11px] text-slate-400 line-clamp-1">${t.desc}</p>
+                <div class="flex items-center gap-1.5 pt-1">${assigneesHtml}</div>
+              </div>
+              <div class="flex items-center gap-2 self-end sm:self-center">
+                <span class="text-[10px] font-mono text-slate-400">⏱️ ${t.deadline}</span>
+                <button onclick="switchTab('proyek')" class="px-2.5 py-1 bg-dark-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700">
+                  Detail →
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render Activities Log
+      const logEl = document.getElementById('dash-activity-log');
+      logEl.innerHTML = AppState.activities.map(act => `
+        <div class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-dark-800/50 transition-colors">
+          <span class="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0"></span>
+          <div class="flex-1">
+            <p class="text-slate-300 text-xs">${act.text}</p>
+            <span class="text-[10px] text-slate-500 font-mono">${act.time}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ================= TAB 3: KARYAWAN (DIRECTORY) =================
+    function renderEmployeesDirectory() {
+      const grid = document.getElementById('employees-grid');
+      grid.innerHTML = AppState.employees.map(emp => {
+        const skillsHtml = emp.skills.map(s => `<span class="px-1.5 py-0.5 rounded-md bg-dark-800 text-[10px] text-slate-300">${s}</span>`).join('');
+        return `
+          <div class="glass-card p-5 rounded-2xl border border-dark-700/70 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg border border-white/20" style="background-color:${emp.hex}">
+                  ${emp.emoji}
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  ● ${emp.status}
+                </span>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-base text-white">${emp.name}</h3>
+                <span class="text-xs text-sky-400 font-bold block">${emp.role}</span>
+                <span class="text-[10px] text-slate-400 font-mono">Ruang: ${emp.room}</span>
+              </div>
+              <p class="text-xs text-slate-300 italic bg-dark-950/60 p-2.5 rounded-xl border border-dark-700/60">
+                "${emp.dialog}"
+              </p>
+              <div>
+                <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Keahlian:</span>
+                <div class="flex flex-wrap gap-1">${skillsHtml}</div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-dark-700/60 flex items-center gap-2">
+              <button onclick="zoomToEmployeeIn3D('${emp.id}')" class="flex-1 py-1.5 bg-dark-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700">
+                🏢 Kunjungi di 3D
+              </button>
+              <button onclick="openDirectChatWith('${emp.id}')" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-md">
+                💬 Chat Staf
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ================= TAB 4: PROYEK & TUGAS (TASK MANAGEMENT) =================
+    let currentTaskFilter = 'semua';
+
+    function filterTasks(status) {
+      currentTaskFilter = status;
+      document.querySelectorAll('.task-filter-btn').forEach(btn => {
+        btn.classList.replace('bg-indigo-600', 'bg-dark-850');
+        btn.classList.replace('text-white', 'text-slate-400');
+      });
+      const activeBtn = document.getElementById(`filter-btn-${status}`);
+      if (activeBtn) {
+        activeBtn.classList.replace('bg-dark-850', 'bg-indigo-600');
+        activeBtn.classList.replace('text-slate-400', 'text-white');
+      }
+      renderTasksList();
+    }
+
+    function renderTasksList() {
+      const container = document.getElementById('tasks-container');
+      let tasks = AppState.tasks;
+      if (currentTaskFilter !== 'semua') {
+        tasks = tasks.filter(t => t.status === currentTaskFilter);
+      }
+
+      if (tasks.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-xs italic">Tidak ada tugas pada kategori ini.</div>`;
+        return;
+      }
+
+      container.innerHTML = tasks.map(t => {
+        const assignees = t.assignedTo.map(id => AppState.employees.find(e => e.id === id)).filter(Boolean);
+        const assigneesHtml = assignees.map(a => `
+          <div class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-dark-900 border border-slate-700 text-slate-300">
+            <span>${a.emoji}</span><span>${a.name}</span>
+          </div>
+        `).join('');
+
+        let badge = 'bg-sky-500/20 text-sky-300 border-sky-500/30';
+        if (t.status === 'baru') badge = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        if (t.status === 'kolaborasi') badge = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+        if (t.status === 'menunggu_approval') badge = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        if (t.status === 'revisi') badge = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+        if (t.status === 'selesai') badge = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+        return `
+          <div class="glass-card p-5 rounded-2xl border border-dark-700/70 hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${badge}">
+                  ${t.status.replace('_', ' ')}
+                </span>
+                <span class="text-[10px] font-mono text-slate-400">🔥 ${t.priority}</span>
+              </div>
+              <div>
+                <h3 class="font-extrabold text-base text-white">${t.title}</h3>
+                <p class="text-xs text-slate-300 mt-1">${t.desc}</p>
+              </div>
+              <div class="p-2.5 rounded-xl bg-dark-950/70 border border-dark-700/60 text-xs">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase">Hasil yang Diharapkan:</span>
+                <p class="text-slate-200 mt-0.5">${t.deliverable || '-'}</p>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Ditugaskan Kepada:</span>
+                <div class="flex flex-wrap gap-1.5">${assigneesHtml}</div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-dark-700/60 flex items-center justify-between gap-2">
+              <span class="text-[11px] font-mono text-slate-400">⏱️ ${t.deadline}</span>
+              <div class="flex items-center gap-1.5">
+                ${t.status === 'menunggu_approval' ? `
+                  <button onclick="approveTask('${t.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow">
+                    ✓ Setujui
+                  </button>
+                  <button onclick="requestRevisionTask('${t.id}')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg">
+                    Revisi
+                  </button>
+                ` : `
+                  <button onclick="markTaskComplete('${t.id}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg">
+                    Update Status
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function approveTask(taskId) {
+      const task = AppState.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = 'selesai';
+        AppState.activities.unshift({
+          id: Date.now(),
+          text: `CEO Rahel MENYETUJUI hasil pekerjaan "${task.title}".`,
+          time: 'Baru saja',
+          type: 'approval'
+        });
+        saveState();
+        renderTasksList();
+        renderDashboard();
+        alert(`Tugas "${task.title}" telah disetujui CEO Rahel! Status diubah menjadi Selesai.`);
+      }
+    }
+
+    function requestRevisionTask(taskId) {
+      const note = prompt('Tuliskan catatan revisi CEO Rahel untuk tim:');
+      if (note) {
+        const task = AppState.tasks.find(t => t.id === taskId);
+        if (task) {
+          task.status = 'revisi';
+          task.ceoFeedback = note;
+          AppState.activities.unshift({
+            id: Date.now(),
+            text: `CEO Rahel meminta REVISI pada "${task.title}": "${note}"`,
+            time: 'Baru saja',
+            type: 'revision'
+          });
+          saveState();
+          renderTasksList();
+          alert('Catatan revisi telah dikirim ke tim pelaksana.');
+        }
+      }
+    }
+
+    function markTaskComplete(taskId) {
+      const task = AppState.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = 'menunggu_approval';
+        saveState();
+        renderTasksList();
+        alert('Tugas diajukan ke CEO untuk persetujuan akhir.');
+      }
+    }
+
+    // ================= TAB 5: MEETING (VIRTUAL MEETING ROOM) =================
+    let currentMeetingTopic = 'Review Sprint & Desain V2.0';
+
+    function renderMeetingTab() {
+      document.getElementById('meeting-current-topic').textContent = currentMeetingTopic;
+      const activeMtg = AppState.meetings[0] || { transcript: [], summary: '' };
+
+      const transcriptBox = document.getElementById('meeting-transcript-box');
+      transcriptBox.innerHTML = activeMtg.transcript.map(msg => `
+        <div class="p-2.5 rounded-xl ${msg.speaker.includes('CEO') ? 'bg-indigo-600/30 border border-indigo-500/40' : 'bg-dark-900 border border-dark-700/60'}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-bold text-white text-[11px]">${msg.speaker}</span>
+          </div>
+          <p class="text-slate-200 leading-relaxed">${msg.text}</p>
+        </div>
+      `).join('');
+      transcriptBox.scrollTop = transcriptBox.scrollHeight;
+
+      // Summary list
+      const summaryList = document.getElementById('meeting-summaries-list');
+      summaryList.innerHTML = AppState.meetings.map(m => `
+        <div class="p-3 rounded-xl bg-dark-900 border border-dark-700/60 space-y-1">
+          <span class="text-[10px] text-sky-400 font-mono">${m.date}</span>
+          <h4 class="font-bold text-white text-xs">${m.topic}</h4>
+          <p class="text-slate-300 text-[11px]">${m.summary}</p>
+        </div>
+      `).join('');
+    }
+
+    async function handleSendMeetingPrompt(e) {
+      e.preventDefault();
+      const input = document.getElementById('meeting-prompt-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const activeMtg = AppState.meetings[0];
+      activeMtg.transcript.push({ speaker: `CEO ${AppState.company.ceo}`, text: text });
+      renderMeetingTab();
+
+      // Simulate or call AI multi-agent responses
+      const respondents = [
+        AppState.employees.find(e => e.id === 'midoriya'),
+        AppState.employees.find(e => e.id === 'lufas'),
+        AppState.employees.find(e => e.id === 'asta')
+      ].filter(Boolean);
+
+      for (const respondent of respondents) {
+        await new Promise(r => setTimeout(r, 600));
+        let reply = '';
+        if (AppState.apiKey) {
+          try {
+            reply = await callGeminiAI(AppState.apiKey, respondent.systemPrompt, `Dalam konteks meeting dengan agenda "${currentMeetingTopic}", CEO Rahel bertanya/berkata: "${text}". Berikan tanggapan singkat dan solutif sesuai keahlianmu!`);
+          } catch(err) {
+            reply = `${respondent.dialog} Kami setuju dengan arahan CEO Rahel untuk agenda "${currentMeetingTopic}".`;
+          }
+        } else {
+          reply = `${respondent.dialog} Kami siap melaksanakan arahan CEO Rahel terkait "${text}".`;
+        }
+
+        activeMtg.transcript.push({ speaker: `${respondent.name} (${respondent.role})`, text: reply });
+        renderMeetingTab();
+      }
+
+      saveState();
+    }
+
+    function startNewMeetingFlow() {
+      const topic = prompt('Masukkan topik / agenda rapat baru:');
+      if (topic) {
+        currentMeetingTopic = topic;
+        AppState.meetings.unshift({
+          id: `mtg-${Date.now()}`,
+          topic: topic,
+          date: new Date().toLocaleString(),
+          attendees: ['midoriya', 'asta', 'lufas', 'ajeng', 'l', 'dhani', 'zenon', 'cahyara'],
+          summary: `Rapat dimulai oleh CEO ${AppState.company.ceo} membahas agenda: ${topic}.`,
+          transcript: [
+            { speaker: `CEO ${AppState.company.ceo}`, text: `Rapat resmi dibuka. Agenda kita hari ini adalah: ${topic}. Silakan tiap divisi memberikan pembaruan.` }
+          ]
+        });
+        saveState();
+        renderMeetingTab();
+      }
+    }
+
+    // ================= TAB 6: CHAT TEAM (CHANNELS) =================
+    let activeChatChannel = 'general';
+
+    function renderTeamChatView() {
+      const listEl = document.getElementById('chat-channels-list');
+      let html = `
+        <button onclick="selectChatChannel('general')" class="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 font-bold transition-all ${activeChatChannel === 'general' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-dark-800'}">
+          <span>#</span> <span>general-kolaborasi</span>
+        </button>
+        <div class="pt-2 pb-1 px-2 text-[10px] font-bold uppercase text-slate-500">Pesan Langsung (DM)</div>
+      `;
+
+      AppState.employees.forEach(emp => {
+        const isCurrent = activeChatChannel === emp.id;
+        html += `
+          <button onclick="selectChatChannel('${emp.id}')" class="w-full text-left px-3 py-2 rounded-xl flex items-center justify-between font-bold transition-all ${isCurrent ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-dark-800'}">
+            <div class="flex items-center gap-2">
+              <span>${emp.emoji}</span>
+              <span>${emp.name}</span>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </button>
+        `;
+      });
+      listEl.innerHTML = html;
+
+      // Render Messages
+      const container = document.getElementById('team-chat-messages');
+      const msgs = AppState.chats[activeChatChannel] || [];
+
+      if (msgs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-slate-500 py-12 italic text-xs">
+            Belum ada obrolan di saluran ini. Mulai percakapan sekarang!
+          </div>
+        `;
+      } else {
+        container.innerHTML = msgs.map(m => `
+          <div class="flex ${m.sender === 'ceo' ? 'justify-end' : 'justify-start'}">
+            <div class="p-3 rounded-2xl max-w-sm ${m.sender === 'ceo' ? 'bg-indigo-600 text-white shadow-md' : 'bg-dark-900 text-slate-200 border border-slate-700/80'}">
+              <span class="text-[10px] font-bold block opacity-75 mb-0.5">${m.senderName || m.sender}</span>
+              <p class="whitespace-pre-wrap leading-relaxed">${m.text}</p>
+              <span class="text-[9px] opacity-60 block text-right mt-1">${m.time}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function selectChatChannel(channelId) {
+      activeChatChannel = channelId;
+      const headerName = document.getElementById('chat-header-name');
+      const headerDesc = document.getElementById('chat-header-desc');
+
+      if (channelId === 'general') {
+        headerName.textContent = '#general-kolaborasi';
+        headerDesc.textContent = 'Saluran pertukaran tugas & koordinasi lintas divisi';
+      } else {
+        const emp = AppState.employees.find(e => e.id === channelId);
+        if (emp) {
+          headerName.textContent = `${emp.name} (${emp.role})`;
+          headerDesc.textContent = emp.activity;
+        }
+      }
+      renderTeamChatView();
+    }
+
+    async function handleSendTeamChat(e) {
+      e.preventDefault();
+      const input = document.getElementById('team-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      if (!AppState.chats[activeChatChannel]) AppState.chats[activeChatChannel] = [];
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      AppState.chats[activeChatChannel].push({
+        sender: 'ceo',
+        senderName: `CEO ${AppState.company.ceo}`,
+        text: text,
+        time: timeStr
+      });
+      renderTeamChatView();
+
+      // Trigger response
+      if (activeChatChannel === 'general') {
+        // Midoriya replies on general channel
+        await new Promise(r => setTimeout(r, 700));
+        AppState.chats['general'].push({
+          sender: 'midoriya',
+          senderName: 'Midoriya (Team Leader)',
+          text: `Instruksi diterima, CEO ${AppState.company.ceo}! Tim segera berkoordinasi dan membagi sub-task.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+      } else {
+        const emp = AppState.employees.find(e => e.id === activeChatChannel);
+        if (emp) {
+          let reply = '';
+          if (AppState.apiKey) {
+            try {
+              reply = await callGeminiAI(AppState.apiKey, emp.systemPrompt, text);
+            } catch(err) {
+              reply = `${emp.dialog} Instruksi dipahami dan sedang saya jalankan, CEO Rahel!`;
+            }
+          } else {
+            await new Promise(r => setTimeout(r, 700));
+            reply = `${emp.dialog} Instruksi "${text}" dipahami dan sedang saya prioritaskan!`;
+          }
+          AppState.chats[activeChatChannel].push({
+            sender: emp.id,
+            senderName: emp.name,
+            text: reply,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+        }
+      }
+
+      saveState();
+      renderTeamChatView();
+    }
+
+    // ================= TAB 7: STATISTIK (ANALYTICS) =================
+    function renderStatistics() {
+      // Dept workload
+      const techTasks = AppState.tasks.filter(t => t.assignedTo.some(id => ['midoriya', 'asta', 'l'].includes(id))).length;
+      const creativeTasks = AppState.tasks.filter(t => t.assignedTo.some(id => ['lufas', 'ajeng', 'cahyara', 'dhani', 'zenon'].includes(id))).length;
+      const total = techTasks + creativeTasks || 1;
+
+      document.getElementById('stats-dept-bars').innerHTML = `
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 font-bold mb-1">
+            <span>Tech & Engineering</span>
+            <span>${Math.round((techTasks/total)*100)}% (${techTasks} Tugas)</span>
+          </div>
+          <div class="w-full bg-dark-900 h-2 rounded-full overflow-hidden">
+            <div class="bg-sky-400 h-full" style="width:${Math.round((techTasks/total)*100)}%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs text-slate-300 font-bold mb-1">
+            <span>Creative & Content</span>
+            <span>${Math.round((creativeTasks/total)*100)}% (${creativeTasks} Tugas)</span>
+          </div>
+          <div class="w-full bg-dark-900 h-2 rounded-full overflow-hidden">
+            <div class="bg-purple-400 h-full" style="width:${Math.round((creativeTasks/total)*100)}%"></div>
+          </div>
+        </div>
+      `;
+
+      // Status breakdown
+      const done = AppState.tasks.filter(t => t.status === 'selesai').length;
+      const active = AppState.tasks.filter(t => t.status === 'sedang_dikerjakan').length;
+      const review = AppState.tasks.filter(t => t.status === 'menunggu_approval').length;
+
+      document.getElementById('stats-task-breakdown').innerHTML = `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-900 border border-dark-700/60">
+          <span class="text-emerald-400 font-bold">✓ Selesai Terverifikasi</span>
+          <span class="font-extrabold text-white">${done}</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-900 border border-dark-700/60">
+          <span class="text-sky-400 font-bold">⚡ Sedang Dikerjakan</span>
+          <span class="font-extrabold text-white">${active}</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-dark-900 border border-dark-700/60">
+          <span class="text-amber-400 font-bold">⏳ Menunggu Review CEO</span>
+          <span class="font-extrabold text-white">${review}</span>
+        </div>
+      `;
+
+      // Leaderboard
+      document.getElementById('stats-employee-leaderboard').innerHTML = AppState.employees.map((emp, i) => `
+        <div class="flex items-center justify-between p-2 rounded-xl bg-dark-900/60 border border-dark-700/60">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-500 font-mono text-[11px]">#${i+1}</span>
+            <span>${emp.emoji}</span>
+            <span class="font-bold text-white text-xs">${emp.name}</span>
+          </div>
+          <span class="text-xs font-mono font-bold text-emerald-400">98% Efisiensi</span>
+        </div>
+      `).join('');
+    }
+
+    // ================= TAB 8: LAPORAN (REPORTS) =================
+    function renderReportsList() {
+      const container = document.getElementById('reports-list-container');
+      if (AppState.reports.length === 0) {
+        container.innerHTML = `<div class="py-12 text-center text-slate-500 text-xs italic">Belum ada laporan yang diajukan.</div>`;
+        return;
+      }
+
+      container.innerHTML = AppState.reports.map(rep => {
+        const emp = AppState.employees.find(e => e.id === rep.submittedBy);
+        return `
+          <div class="glass-panel p-5 rounded-2xl border border-dark-700/80 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-700/60 pb-3">
+              <div>
+                <span class="text-[10px] text-sky-400 font-mono">${rep.date}</span>
+                <h3 class="font-extrabold text-base text-white">${rep.taskTitle}</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  ${rep.status}
+                </span>
+                <span class="text-xs text-slate-300 font-semibold">${emp ? `${emp.emoji} ${emp.name}` : ''}</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${rep.summary}</p>
+            <div class="p-3 bg-dark-950/80 rounded-xl border border-dark-700/60 flex items-center justify-between text-xs">
+              <span class="text-slate-400 font-mono text-[11px]">Deliverable: ${rep.deliverableLink}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="approveTask('${rep.taskId}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md">
+                  ✓ Setujui Laporan
+                </button>
+                <button onclick="requestRevisionTask('${rep.taskId}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl">
+                  Minta Revisi
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ================= TAB 9: PENGATURAN (SETTINGS) =================
+    function renderSettingsTab() {
+      document.getElementById('settings-company-name').value = AppState.company.name;
+      document.getElementById('settings-ceo-name').value = AppState.company.ceo;
+      document.getElementById('settings-business-desc').value = AppState.company.desc;
+      document.getElementById('settings-api-key').value = AppState.apiKey || '';
+    }
+
+    function saveCompanySettings() {
+      AppState.company.name = document.getElementById('settings-company-name').value.trim() || 'DEKU.AI COMPANY';
+      AppState.company.ceo = document.getElementById('settings-ceo-name').value.trim() || 'Rahel';
+      AppState.company.desc = document.getElementById('settings-business-desc').value.trim();
+      AppState.apiKey = document.getElementById('settings-api-key').value.trim();
+
+      saveState();
+      alert('Pengaturan perusahaan berhasil disimpan!');
+    }
+
+    function exportDataJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(AppState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `deku_ai_backup_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function resetDefaultData() {
+      if (confirm('Apakah Anda yakin ingin mereset seluruh data kembali ke pengaturan awal?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    // ================= CEO CONTROL MODAL LOGIC =================
+    let selectedCeoEmployees = [];
+
+    function openCeoControlModal() {
+      selectedCeoEmployees = AppState.employees.map(e => e.id);
+      renderCeoEmployeeChips();
+      document.getElementById('modal-ceo-control').classList.remove('hidden');
+    }
+
+    function closeCeoControlModal() {
+      document.getElementById('modal-ceo-control').classList.add('hidden');
+    }
+
+    function renderCeoEmployeeChips() {
+      const container = document.getElementById('ceo-employee-chips');
+      container.innerHTML = AppState.employees.map(emp => {
+        const isSelected = selectedCeoEmployees.includes(emp.id);
+        return `
+          <label class="flex items-center gap-1.5 p-1.5 rounded-lg border text-[11px] cursor-pointer transition-all ${isSelected ? 'bg-indigo-600/30 border-indigo-500 text-white font-bold' : 'bg-dark-900 border-dark-700/60 text-slate-400'}">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectCeoEmp('${emp.id}')" class="rounded text-indigo-600 focus:ring-0">
+            <span>${emp.emoji}</span>
+            <span>${emp.name}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function toggleSelectCeoEmp(empId) {
+      if (selectedCeoEmployees.includes(empId)) {
+        selectedCeoEmployees = selectedCeoEmployees.filter(id => id !== empId);
+      } else {
+        selectedCeoEmployees.push(empId);
+      }
+      renderCeoEmployeeChips();
+    }
+
+    function selectAllEmployees(select) {
+      selectedCeoEmployees = select ? AppState.employees.map(e => e.id) : [];
+      renderCeoEmployeeChips();
+    }
+
+    function selectDeptEmployees(dept) {
+      selectedCeoEmployees = AppState.employees.filter(e => e.dept === dept).map(e => e.id);
+      renderCeoEmployeeChips();
+    }
+
+    function dispatchCeoInstruction() {
+      const text = document.getElementById('ceo-instruction-text').value.trim();
+      if (!text || selectedCeoEmployees.length === 0) {
+        alert('Pilih minimal satu staf dan ketik instruksi.');
+        return;
+      }
+
+      const names = selectedCeoEmployees.map(id => {
+        const emp = AppState.employees.find(e => e.id === id);
+        return emp ? emp.name : '';
+      }).join(', ');
+
+      AppState.activities.unshift({
+        id: Date.now(),
+        text: `CEO ${AppState.company.ceo} mengirim instruksi ke [${names}]: "${text}"`,
+        time: 'Baru saja',
+        type: 'instruction'
+      });
+
+      // Post to general chat
+      if (!AppState.chats['general']) AppState.chats['general'] = [];
+      AppState.chats['general'].push({
+        sender: 'ceo',
+        senderName: `CEO ${AppState.company.ceo}`,
+        text: `[INSTRUKSI MASSAL untuk: ${names}]\n${text}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+
+      saveState();
+      closeCeoControlModal();
+      alert(`Instruksi berhasil dikirim kepada ${selectedCeoEmployees.length} staf AI!`);
+      switchTab('beranda');
+    }
+
+    function summonSelectedToMeeting() {
+      closeCeoControlModal();
+      currentMeetingTopic = prompt('Topik pembahasan untuk staf terpilih:', 'Pengarahan Khusus CEO') || 'Pengarahan Khusus CEO';
+      switchTab('meeting');
+    }
+
+    // ================= CREATE TASK MODAL LOGIC =================
+    function openCreateTaskModal() {
+      const container = document.getElementById('task-assignees-selection');
+      container.innerHTML = AppState.employees.map(emp => `
+        <label class="flex items-center gap-1.5 p-1.5 rounded-lg bg-dark-900 border border-dark-700/60 text-[11px] cursor-pointer text-slate-300">
+          <input type="checkbox" name="task_assignee" value="${emp.id}" class="rounded text-indigo-600 focus:ring-0">
+          <span>${emp.emoji}</span>
+          <span>${emp.name}</span>
+        </label>
+      `).join('');
+      document.getElementById('modal-create-task').classList.remove('hidden');
+    }
+
+    function closeCreateTaskModal() {
+      document.getElementById('modal-create-task').classList.add('hidden');
+    }
+
+    function handleSaveNewTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('task-input-title').value.trim();
+      const desc = document.getElementById('task-input-desc').value.trim();
+      const priority = document.getElementById('task-input-priority').value;
+      const deadline = document.getElementById('task-input-deadline').value.trim() || 'Hari Ini';
+      const deliverable = document.getElementById('task-input-deliverable').value.trim();
+
+      const checkedAssignees = Array.from(document.querySelectorAll('input[name="task_assignee"]:checked')).map(el => el.value);
+      if (checkedAssignees.length === 0) {
+        alert('Tentukan minimal satu staf AI untuk mengerjakan tugas ini.');
+        return;
+      }
+
+      const newTask = {
+        id: `tsk-${Date.now()}`,
+        title: title,
+        desc: desc,
+        priority: priority,
+        status: 'sedang_dikerjakan',
+        deadline: deadline,
+        assignedTo: checkedAssignees,
+        deliverable: deliverable,
+        ceoFeedback: ''
+      };
+
+      AppState.tasks.unshift(newTask);
+      AppState.activities.unshift({
+        id: Date.now(),
+        text: `CEO Rahel membuat tugas baru: "${title}".`,
+        time: 'Baru saja',
+        type: 'task'
+      });
+
+      saveState();
+      closeCreateTaskModal();
+      alert(`Tugas "${title}" berhasil didelegasikan!`);
+      switchTab('proyek');
+    }
+
+    // ================= THREE.JS 3D WORLD SYSTEM =================
+    let scene, camera, renderer, controls;
+    let brainRings = [];
+    let brainCore;
+    let particleSystem;
+    let characterMeshes = [];
+    let activeFocusedAgent = null;
+
+    const OVERVIEW_CAMERA_POS = { x: 26, y: 26, z: 26 };
+    const OVERVIEW_TARGET_POS = { x: 0, y: 0, z: 0 };
+
+    function initThreeScene() {
+      const container = document.getElementById('canvas-container');
+      if (!container) return;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x070b14);
+      scene.fog = new THREE.FogExp2(0x070b14, 0.015);
+
+      const aspect = window.innerWidth / window.innerHeight;
+      camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 1000);
+      camera.position.set(OVERVIEW_CAMERA_POS.x, OVERVIEW_CAMERA_POS.y, OVERVIEW_CAMERA_POS.z);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.maxPolarAngle = Math.PI / 2.1;
+      controls.minDistance = 6;
+      controls.maxDistance = 55;
+      controls.target.set(0, 0, 0);
+
+      const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x090e17, 0.7);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dirLight.position.set(25, 40, 20);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 0.5;
+      dirLight.shadow.camera.far = 100;
+      const d = 26;
+      dirLight.shadow.camera.left = -d;
+      dirLight.shadow.camera.right = d;
+      dirLight.shadow.camera.top = d;
+      dirLight.shadow.camera.bottom = -d;
+      dirLight.shadow.bias = -0.0004;
+      scene.add(dirLight);
+
+      const fillLight = new THREE.DirectionalLight(0x818cf8, 0.5);
+      fillLight.position.set(-20, 20, -20);
+      scene.add(fillLight);
+
+      build3DOfficeElements();
+      buildFloatingParticles();
+
+      window.addEventListener('resize', onWindowResize);
+      renderer.domElement.addEventListener('click', onSceneClick);
+
+      animate();
+    }
+
+    function build3DOfficeElements() {
+      // 1. Base Platform
+      const baseGeo = new THREE.CylinderGeometry(23, 24, 1.2, 48);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x0e1726, roughness: 0.7, metalness: 0.2 });
+      const platform = new THREE.Mesh(baseGeo, baseMat);
+      platform.position.y = -0.6;
+      platform.receiveShadow = true;
+      scene.add(platform);
+
+      const ringGeo = new THREE.TorusGeometry(23.2, 0.12, 16, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const rim = new THREE.Mesh(ringGeo, ringMat);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.02;
+      scene.add(rim);
+
+      const grid = new THREE.GridHelper(90, 45, 0x1e293b, 0x0f172a);
+      grid.position.y = -1.21;
+      scene.add(grid);
+
+      // 2. THE BRAIN Center
+      const brainGroup = new THREE.Group();
+      const pad = new THREE.Mesh(
+        new THREE.CylinderGeometry(4.2, 4.4, 0.4, 32),
+        new THREE.MeshStandardMaterial({ color: 0x090e17, roughness: 0.4, metalness: 0.6 })
+      );
+      pad.position.y = 0.2;
+      pad.receiveShadow = true;
+      brainGroup.add(pad);
+
+      const corePillar = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.4, 1.4, 3.8, 24),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.2, transparent: true, opacity: 0.85 })
+      );
+      corePillar.position.y = 2.1;
+      corePillar.castShadow = true;
+      brainGroup.add(corePillar);
+
+      const ringColors = [0x00f0ff, 0x818cf8, 0x38bdf8];
+      const ringRadii = [2.2, 2.9, 3.6];
+      ringRadii.forEach((r, idx) => {
+        const ringMesh = new THREE.Mesh(
+          new THREE.TorusGeometry(r, 0.05, 12, 48),
+          new THREE.MeshBasicMaterial({ color: ringColors[idx] })
+        );
+        ringMesh.position.y = 1.8 + idx * 0.4;
+        ringMesh.rotation.x = Math.PI / 2 + (idx * 0.2);
+        brainGroup.add(ringMesh);
+        brainRings.push(ringMesh);
+      });
+
+      brainCore = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.7, 0),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.8, roughness: 0.1, metalness: 0.9 })
+      );
+      brainCore.position.y = 2.4;
+      brainGroup.add(brainCore);
+
+      const coreLight = new THREE.PointLight(0x38bdf8, 2.5, 20);
+      coreLight.position.set(0, 2.5, 0);
+      brainGroup.add(coreLight);
+      scene.add(brainGroup);
+
+      // 3. Conduits & 8 Rooms
+      AppState.employees.forEach(agent => {
+        // Conduit line
+        const points = [
+          new THREE.Vector3(0, 0.05, 0),
+          new THREE.Vector3(agent.pos.x * 0.4, 0.05, agent.pos.z * 0.4),
+          new THREE.Vector3(agent.pos.x, 0.05, agent.pos.z)
+        ];
+        const tube = new THREE.Mesh(
+          new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 20, 0.04, 8, false),
+          new THREE.MeshBasicMaterial({ color: agent.color, transparent: true, opacity: 0.6 })
+        );
+        scene.add(tube);
+
+        // Room
+        const roomGroup = new THREE.Group();
+        roomGroup.position.set(agent.pos.x, 0, agent.pos.z);
+        roomGroup.userData = { agentId: agent.id };
+
+        const floorMesh = new THREE.Mesh(
+          new THREE.BoxGeometry(6.4, 0.3, 6.4),
+          new THREE.MeshStandardMaterial({ color: agent.floorColor, roughness: 0.6 })
+        );
+        floorMesh.position.y = 0.15;
+        floorMesh.receiveShadow = true;
+        roomGroup.add(floorMesh);
+
+        const edgeMesh = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.04, 6.5), new THREE.MeshBasicMaterial({ color: agent.color }));
+        edgeMesh.position.y = 0.32;
+        roomGroup.add(edgeMesh);
+
+        // Walls
+        const wallMat = new THREE.MeshStandardMaterial({ color: agent.wallColor, roughness: 0.5 });
+        const wall1 = new THREE.Mesh(new THREE.BoxGeometry(6.4, 2.2, 0.25), wallMat);
+        wall1.position.set(0, 1.25, -3.1);
+        wall1.castShadow = true;
+        wall1.receiveShadow = true;
+        roomGroup.add(wall1);
+
+        const wall2 = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.2, 6.4), wallMat);
+        wall2.position.set(-3.1, 1.25, 0);
+        wall2.castShadow = true;
+        wall2.receiveShadow = true;
+        roomGroup.add(wall2);
+
+        // Desk
+        const deskGroup = new THREE.Group();
+        deskGroup.position.set(0.3, 0.3, -0.6);
+        const deskTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, 1.8), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
+        deskTop.position.y = 1.3;
+        deskTop.castShadow = true;
+        deskTop.receiveShadow = true;
+        deskGroup.add(deskTop);
+
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 });
+        [[-1.6, -0.7], [1.6, -0.7], [-1.6, 0.7], [1.6, 0.7]].forEach(([lx, lz]) => {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 12), legMat);
+          leg.position.set(lx, 0.65, lz);
+          deskGroup.add(leg);
+        });
+
+        // Ultrawide Glowing PC
+        const monitorGroup = new THREE.Group();
+        monitorGroup.position.set(0, 1.38, -0.4);
+        const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.1, 0.08), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+        monitorGroup.add(screenFrame);
+        const screenFace = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.0), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+        screenFace.position.z = 0.045;
+        monitorGroup.add(screenFace);
+        deskGroup.add(monitorGroup);
+        roomGroup.add(deskGroup);
+
+        // Chair
+        const chair = new THREE.Group();
+        chair.position.set(0.3, 0.3, 0.8);
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.16, 1.2), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+        seat.position.y = 0.85;
+        chair.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.2, 0.16), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+        back.position.set(0, 1.45, 0.55);
+        chair.add(back);
+        roomGroup.add(chair);
+
+        // Character
+        const charGroup = new THREE.Group();
+        charGroup.position.set(0.3, 0.3 + 0.85, 0.5);
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.9, 12), new THREE.MeshStandardMaterial({ color: agent.color }));
+        body.position.y = 0.45;
+        body.castShadow = true;
+        charGroup.add(body);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 16), new THREE.MeshStandardMaterial({ color: 0xffedd5 }));
+        head.position.y = 1.15;
+        head.castShadow = true;
+        charGroup.add(head);
+
+        const hair = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.7), new THREE.MeshStandardMaterial({ color: agent.hairColor }));
+        hair.position.y = 1.25;
+        charGroup.add(hair);
+
+        charGroup.userData = { isCharacter: true, agentId: agent.id, initialY: charGroup.position.y };
+        roomGroup.add(charGroup);
+        characterMeshes.push(charGroup);
+
+        // Plant
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.25, 0.6, 12), new THREE.MeshStandardMaterial({ color: 0xf1f5f9 }));
+        pot.position.set(-2.2, 0.6, 2.2);
+        roomGroup.add(pot);
+        const leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5, 0), new THREE.MeshStandardMaterial({ color: 0x10b981 }));
+        leaf.position.set(-2.2, 1.05, 2.2);
+        roomGroup.add(leaf);
+
+        // Zenon's Ring Light
+        if (agent.id === 'zenon') {
+          const ringLight = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.06, 12, 32), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+          ringLight.position.set(2.2, 2.6, -1.8);
+          ringLight.rotation.y = Math.PI / 4;
+          roomGroup.add(ringLight);
+        }
+
+        scene.add(roomGroup);
+      });
+    }
+
+    function buildFloatingParticles() {
+      const pCount = 120;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 36;
+        pPos[i + 1] = Math.random() * 10 + 0.5;
+        pPos[i + 2] = (Math.random() - 0.5) * 36;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      particleSystem = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.15, transparent: true, opacity: 0.75 }));
+      scene.add(particleSystem);
+    }
+
+    function updateProjectedPins() {
+      if (currentTab !== 'kantor3d') return;
+      const container = document.getElementById('pins-layer');
+      container.innerHTML = '';
+
+      AppState.employees.forEach(agent => {
+        const agentVec = new THREE.Vector3(agent.pos.x + 0.3, 3.2, agent.pos.z + 0.5);
+        agentVec.project(camera);
+        if (agentVec.z > 1) return;
+
+        const x = (agentVec.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(agentVec.y * 0.5) + 0.5) * window.innerHeight;
+
+        const pin = document.createElement('div');
+        pin.className = 'agent-3d-pin';
+        pin.style.left = `${x}px`;
+        pin.style.top = `${y}px`;
+        pin.onclick = (e) => {
+          e.stopPropagation();
+          zoomToAgent(agent);
+        };
+        pin.innerHTML = `
+          <div class="agent-pill">
+            <span>${agent.name}</span>
+            <span>${agent.emoji}</span>
+          </div>
+        `;
+        container.appendChild(pin);
+
+        // Room Header Tag
+        const roomVec = new THREE.Vector3(agent.pos.x, 3.8, agent.pos.z - 3.1);
+        roomVec.project(camera);
+        if (roomVec.z <= 1) {
+          const rx = (roomVec.x * 0.5 + 0.5) * window.innerWidth;
+          const ry = (-(roomVec.y * 0.5) + 0.5) * window.innerHeight;
+          const rtag = document.createElement('div');
+          rtag.className = 'room-header-pill';
+          rtag.style.left = `${rx}px`;
+          rtag.style.top = `${ry}px`;
+          rtag.style.borderColor = agent.hex;
+          rtag.innerHTML = `<span style="color:${agent.hex}">${agent.room}</span>`;
+          container.appendChild(rtag);
+        }
+      });
+    }
+
+    function zoomToAgent(agent) {
+      activeFocusedAgent = agent;
+      updateStoryCard(agent);
+
+      new TWEEN.Tween(camera.position)
+        .to({ x: agent.pos.x + 6, y: 5.2, z: agent.pos.z + 6 }, 1100)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to({ x: agent.pos.x + 0.3, y: 1.5, z: agent.pos.z }, 1100)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      setTimeout(() => {
+        openEmployeeModal(agent);
+      }, 700);
+    }
+
+    function zoomToEmployeeIn3D(empId) {
+      const agent = AppState.employees.find(e => e.id === empId);
+      if (agent) {
+        switchTab('kantor3d');
+        setTimeout(() => zoomToAgent(agent), 150);
+      }
+    }
+
+    function resetToOverview() {
+      activeFocusedAgent = null;
+      updateStoryCard(null);
+
+      new TWEEN.Tween(camera.position)
+        .to(OVERVIEW_CAMERA_POS, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to(OVERVIEW_TARGET_POS, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function updateStoryCard(agent) {
+      const tag = document.getElementById('story-tag');
+      const title = document.getElementById('story-title');
+      const desc = document.getElementById('story-desc');
+      if (agent) {
+        tag.textContent = `DIVISI: ${agent.room}`;
+        tag.style.backgroundColor = agent.hex;
+        title.textContent = `${agent.name} — ${agent.role}`;
+        desc.textContent = agent.activity;
+      } else {
+        tag.textContent = 'AGENT HQ • THE BRAIN';
+        tag.style.backgroundColor = '#4f46e5';
+        title.textContent = 'Kantor Virtual AI DEKU: Semua Staf Terhubung ke Otak AI';
+        desc.textContent = 'Klik salah satu ruangan atau nama staf di bawah untuk zoom in dan melihat mereka bekerja secara langsung.';
+      }
+    }
+
+    // ================= MODAL: DIRECT EMPLOYEE INTERACTION =================
+    let currentModalAgent = null;
+
+    function openEmployeeModal(agent) {
+      currentModalAgent = agent;
+      document.getElementById('emp-modal-avatar').textContent = agent.emoji;
+      document.getElementById('emp-modal-avatar').style.backgroundColor = agent.hex;
+      document.getElementById('emp-modal-name').textContent = agent.name;
+      document.getElementById('emp-modal-room').textContent = agent.room;
+      document.getElementById('emp-modal-room').style.color = agent.hex;
+      document.getElementById('emp-modal-role').textContent = agent.role;
+      document.getElementById('emp-modal-activity').textContent = agent.activity;
+      document.getElementById('emp-modal-dialog').textContent = `"${agent.dialog}"`;
+
+      renderEmployeeDirectChat(agent.id);
+      document.getElementById('modal-employee-chat').classList.remove('hidden');
+      document.getElementById('emp-chat-input').focus();
+    }
+
+    function closeEmployeeModal() {
+      document.getElementById('modal-employee-chat').classList.add('hidden');
+      currentModalAgent = null;
+    }
+
+    function openDirectChatWith(empId) {
+      const agent = AppState.employees.find(e => e.id === empId);
+      if (agent) openEmployeeModal(agent);
+    }
+
+    function renderEmployeeDirectChat(empId) {
+      const box = document.getElementById('emp-chat-box');
+      const msgs = AppState.chats[empId] || [];
+
+      if (msgs.length === 0) {
+        box.innerHTML = `<div class="text-center text-slate-500 py-6 italic text-xs">Belum ada obrolan langsung. Tuliskan instruksi tugas ke staf ini!</div>`;
+        return;
+      }
+
+      box.innerHTML = msgs.map(m => `
+        <div class="flex ${m.sender === 'ceo' ? 'justify-end' : 'justify-start'}">
+          <div class="p-2.5 rounded-xl max-w-xs text-xs ${m.sender === 'ceo' ? 'bg-indigo-600 text-white' : 'bg-dark-900 text-slate-200 border border-slate-700/80'}">
+            <p class="whitespace-pre-wrap">${m.text}</p>
+            <span class="text-[9px] opacity-60 block text-right mt-1">${m.time}</span>
+          </div>
+        </div>
+      `).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function handleSendDirectInstruction(e) {
+      e.preventDefault();
+      const input = document.getElementById('emp-chat-input');
+      const text = input.value.trim();
+      if (!text || !currentModalAgent) return;
+      input.value = '';
+
+      const agent = currentModalAgent;
+      const agentId = agent.id;
+      if (!AppState.chats[agentId]) AppState.chats[agentId] = [];
+
+      AppState.chats[agentId].push({
+        sender: 'ceo',
+        senderName: `CEO ${AppState.company.ceo}`,
+        text: text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      renderEmployeeDirectChat(agentId);
+
+      const loading = document.getElementById('emp-chat-loading');
+      document.getElementById('emp-loading-text').textContent = `${agent.name} sedang memproses instruksi CEO Rahel...`;
+      loading.classList.remove('hidden');
+
+      try {
+        let reply = '';
+        if (AppState.apiKey) {
+          reply = await callGeminiAI(AppState.apiKey, agent.systemPrompt, text);
+        } else {
+          await new Promise(r => setTimeout(r, 700));
+          reply = `${agent.dialog} Arahan "${text}" telah diterima dan segera saya prioritaskan, CEO Rahel!`;
+        }
+
+        AppState.chats[agentId].push({
+          sender: agentId,
+          senderName: agent.name,
+          text: reply,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        agent.dialog = reply.slice(0, 85) + '...';
+        document.getElementById('emp-modal-dialog').textContent = `"${agent.dialog}"`;
+      } catch (err) {
+        alert('Gagal AI: ' + err.message);
+      } finally {
+        loading.classList.add('hidden');
+        renderEmployeeDirectChat(agentId);
+        saveState();
+      }
+    }
+
+    // ================= GEMINI AI CALLER =================
+    async function callGeminiAI(apiKey, systemPrompt, userMessage) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+      const payload = {
+        contents: [{ role: "user", parts: [{ text: `[SYSTEM ROLE / PERSONALITY]\n${systemPrompt}\n\n[USER: CEO RAHEL]\n${userMessage}` }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+      };
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Instruksi dipahami!";
+    }
+
+    // ================= 3D RAYCASTER & INTERACTION =================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function onSceneClick(event) {
+      if (currentTab !== 'kantor3d') return;
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(characterMeshes, true);
+
+      if (intersects.length > 0) {
+        let obj = intersects[0].object;
+        while (obj.parent && !obj.userData.agentId) {
+          obj = obj.parent;
+        }
+        if (obj.userData.agentId) {
+          const agent = AppState.employees.find(a => a.id === obj.userData.agentId);
+          if (agent) zoomToAgent(agent);
+        }
+      }
+    }
+
+    function onWindowResize() {
+      if (!camera || !renderer) return;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // ================= ANIMATION LOOP =================
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsedTime = clock.getElapsedTime();
+
+      TWEEN.update();
+
+      brainRings.forEach((ring, idx) => {
+        ring.rotation.z = elapsedTime * (0.3 + idx * 0.15);
+      });
+
+      if (brainCore) {
+        brainCore.position.y = 2.4 + Math.sin(elapsedTime * 2) * 0.15;
+        brainCore.rotation.y = elapsedTime * 0.8;
+      }
+
+      characterMeshes.forEach((charMesh, i) => {
+        charMesh.position.y = charMesh.userData.initialY + Math.sin(elapsedTime * 3 + i) * 0.02;
+      });
+
+      if (particleSystem) {
+        const positions = particleSystem.geometry.attributes.position.array;
+        for (let i = 1; i < positions.length; i += 3) {
+          positions[i] += 0.02;
+          if (positions[i] > 11) positions[i] = 0.5;
+        }
+        particleSystem.geometry.attributes.position.needsUpdate = true;
+      }
+
+      controls.update();
+      updateProjectedPins();
+      renderer.render(scene, camera);
+    }
+
+    // ================= ON LOAD INITIALIZATION =================
+    window.onload = () => {
+      loadSavedState();
+
+      // Populate 3D Quick selector bar
+      const bar = document.getElementById('agent-buttons-bar');
+      bar.innerHTML = AppState.employees.map(ag => `
+        <button
+          onclick="zoomToEmployeeIn3D('${ag.id}')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all text-slate-300 hover:text-white hover:bg-slate-800/80 flex items-center gap-1.5"
+        >
+          <span>${ag.emoji}</span>
+          <span>${ag.name}</span>
+          <span class="text-[10px] opacity-70">(${ag.room})</span>
+        </button>
+      `).join('');
+
+      initThreeScene();
+      updateKpisAndBadges();
+    };
+  </script>
+</body>
+</html>
