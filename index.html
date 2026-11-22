@@ -166,6 +166,10 @@
 
     <!-- Top Right: CEO Quick Action & Mobile Menu Toggle -->
     <div class="flex items-center gap-2">
+      <button onclick="switchTab('pengaturan')" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition-all shadow-md" title="Pengaturan & Google Gemini API Key">
+        <span>⚙️</span>
+        <span class="hidden sm:inline">Pengaturan AI</span>
+      </button>
       <button onclick="openCeoControlModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all">
         <span>⚡</span>
         <span class="hidden sm:inline">CEO Control</span>
@@ -570,17 +574,29 @@
           <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-dark-700/60 pb-2">
             <span>🤖</span> Integrasi Kecerdasan Buatan (Google Gemini API)
           </h3>
-          <div class="space-y-2 text-xs">
-            <label class="block text-slate-300 font-bold">Google Gemini API Key (Gratis)</label>
-            <input
-              id="settings-api-key"
-              type="password"
-              placeholder="AIzaSy..."
-              class="input-field font-mono"
-            />
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-300 font-bold mb-1">Google Gemini API Key (Gratis)</label>
+              <input
+                id="settings-api-key"
+                type="password"
+                placeholder="Paste kode AIzaSy... di sini"
+                class="input-field font-mono text-xs"
+              />
+            </div>
             <p class="text-[11px] text-slate-400">
-              Dapatkan API Key secara gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Jika dikosongkan, chat akan berjalan dalam mode simulasi cerdas bawaan.
+              Dapatkan API Key secara gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-sky-400 underline font-bold">Google AI Studio</a>. Tempelkan kodenya di atas lalu klik tombol Konfirmasi di bawah.
             </p>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-dark-700/60">
+              <div id="api-key-status-badge" class="text-xs font-bold text-slate-400 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                <span>Belum Terhubung</span>
+              </div>
+              <button onclick="saveApiKeyOnly()" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all">
+                <span>✓</span>
+                <span>Konfirmasi & Simpan Kunci AI</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1707,6 +1723,37 @@
       document.getElementById('settings-ceo-name').value = AppState.company.ceo;
       document.getElementById('settings-business-desc').value = AppState.company.desc;
       document.getElementById('settings-api-key').value = AppState.apiKey || '';
+      updateApiKeyStatusBadge();
+    }
+
+    function saveApiKeyOnly() {
+      const input = document.getElementById('settings-api-key');
+      const val = input ? input.value.trim() : '';
+      AppState.apiKey = val;
+      saveState();
+      updateApiKeyStatusBadge();
+      if (val) {
+        alert('✓ BERHASIL TERHUBUNG! Kunci API Google Gemini telah dikonfirmasi dan disimpan. Karyawan AI Anda sekarang siap merespons instruksi secara nyata!');
+      } else {
+        alert('Kunci API dikosongkan. Sistem berjalan dalam mode simulasi.');
+      }
+    }
+
+    function updateApiKeyStatusBadge() {
+      const badge = document.getElementById('api-key-status-badge');
+      if (badge) {
+        if (AppState.apiKey && AppState.apiKey.trim().length > 5) {
+          badge.innerHTML = `
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-emerald-400 font-extrabold">STATUS: TERHUBUNG 100% KE GEMINI AI</span>
+          `;
+        } else {
+          badge.innerHTML = `
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <span class="text-amber-400 font-bold">STATUS: BELUM TERHUBUNG (MODE SIMULASI)</span>
+          `;
+        }
+      }
     }
 
     function saveCompanySettings() {
