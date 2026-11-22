@@ -2401,20 +2401,88 @@
       }
     }
 
-    // ================= GEMINI AI CALLER =================
+    // ================= GEMINI AI CALLER (MULTI-MODEL RESILIENT & AUTO-DISCOVERY) =================
     async function callGeminiAI(apiKey, systemPrompt, userMessage) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+      if (!apiKey || !apiKey.trim()) throw new Error('API Key belum diisi.');
+      const cleanKey = apiKey.trim();
+
+      const candidateModels = [
+        'gemini-1.5-flash-latest',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-exp',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
+        'gemini-pro'
+      ];
+
       const payload = {
-        contents: [{ role: "user", parts: [{ text: `[SYSTEM ROLE / PERSONALITY]\n${systemPrompt}\n\n[USER: CEO RAHEL]\n${userMessage}` }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `[SYSTEM ROLE / PERSONALITY]\n${systemPrompt}\n\n[USER: CEO RAHEL]\n${userMessage}` }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000
+        }
       };
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+
+      let lastError = null;
+
+      // 1. Coba daftar kandidat model resmi yang aktif
+      for (const model of candidateModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) return text;
+          } else {
+            const errJson = await res.json().catch(() => ({}));
+            lastError = errJson?.error?.message || `HTTP ${res.status}`;
+            if (res.status === 404) continue; // Model ini tidak ada di akun, coba model berikutnya
+            if (res.status === 400 && lastError.includes('API_KEY_INVALID')) {
+              throw new Error('API Key tidak valid. Pastikan Anda menyalin kode API Key yang benar dari Google AI Studio.');
+            }
+          }
+        } catch (e) {
+          if (e.message && e.message.includes('API Key tidak valid')) throw e;
+          lastError = e.message;
+        }
       }
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Instruksi dipahami!";
+
+      // 2. Jika kandidat di atas belum cocok, lakukan deteksi dinamis otomatis (ListModels)
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          const validModel = listData.models?.find(m => m.supportedGenerationMethods?.includes('generateContent') && (m.name.includes('gemini') || m.name.includes('flash')));
+          if (validModel) {
+            const modelName = validModel.name.startsWith('models/') ? validModel.name : `models/${validModel.name}`;
+            const dynUrl = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${cleanKey}`;
+            const dynRes = await fetch(dynUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (dynRes.ok) {
+              const dynData = await dynRes.json();
+              return dynData.candidates?.[0]?.content?.parts?.[0]?.text || "Instruksi dipahami!";
+            }
+          }
+        }
+      } catch (discoveryErr) {
+        console.warn('Dynamic model discovery failed', discoveryErr);
+      }
+
+      throw new Error(lastError || 'Gagal menghubungi model Gemini. Pastikan koneksi internet dan API Key aktif.');
     }
 
     // ================= 3D RAYCASTER & INTERACTION =================
