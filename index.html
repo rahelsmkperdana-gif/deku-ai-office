@@ -848,6 +848,71 @@
     </div>
   </div>
 
+  <!-- ================= MODAL: DELIVERABLE VIEWER (LIHAT & UNDUH HASIL KERJA) ================= -->
+  <div id="modal-deliverable-viewer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-3xl rounded-3xl border border-dark-700/80 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in">
+      <!-- Header -->
+      <div class="p-5 border-b border-dark-700/80 flex items-center justify-between bg-dark-950/70">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-lg shadow-inner">
+            📄
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="deliverable-modal-title" class="text-base font-extrabold text-white">Hasil Kerja Karyawan</h3>
+              <span id="deliverable-modal-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Selesai
+              </span>
+            </div>
+            <p id="deliverable-modal-authors" class="text-xs text-slate-400 mt-0.5">Dikerjakan oleh: Tim DEKU</p>
+          </div>
+        </div>
+        <button onclick="closeDeliverableModal()" class="text-slate-400 hover:text-white p-2 text-lg rounded-xl hover:bg-slate-800 transition-all">✕</button>
+      </div>
+
+      <!-- Sub-bar Info -->
+      <div class="px-5 py-2.5 bg-dark-900/60 border-b border-dark-700/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 font-bold uppercase text-[10px]">Tipe Berkas:</span>
+          <span id="deliverable-modal-filetype" class="font-mono text-sky-400 font-bold">Document (.txt / .md)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 font-bold uppercase text-[10px]">Target Deliverable:</span>
+          <span id="deliverable-modal-target" class="text-slate-300 italic truncate max-w-xs">-</span>
+        </div>
+      </div>
+
+      <!-- Content Preview Area -->
+      <div class="flex-1 p-5 overflow-y-auto space-y-4 bg-dark-950/40">
+        <div class="p-4 rounded-2xl bg-dark-900 border border-dark-700/80 text-slate-200 font-mono text-xs leading-relaxed whitespace-pre-wrap select-text selection:bg-indigo-600 selection:text-white" id="deliverable-modal-content">
+          <!-- Formatted deliverable text/code will be injected here -->
+        </div>
+      </div>
+
+      <!-- Actions Footer -->
+      <div class="p-4 border-t border-dark-700/80 bg-dark-950/90 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="copyDeliverableToClipboard()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 shadow">
+            <span>📋</span>
+            <span id="btn-copy-deliverable-text">Salin Isi Berkas</span>
+          </button>
+          <button onclick="downloadCurrentDeliverable('txt')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <span>💾</span>
+            <span>Unduh Berkas (.txt)</span>
+          </button>
+          <button onclick="downloadCurrentDeliverable('md')" class="px-3 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <span>📝</span>
+            <span>Unduh (.md)</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2" id="deliverable-modal-approval-actions">
+          <!-- Dynamic approval / revision buttons -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= JAVASCRIPT: MASTER ENGINE & PERSISTENCE ================= -->
   <script>
     // ================= INITIAL STATE & DATA =================
@@ -1026,7 +1091,31 @@
         deadline: 'Hari Ini 18:00',
         assignedTo: ['lufas', 'l', 'zenon'],
         deliverable: 'Web Canvas 3D Three.js dengan kontrol isometrik dan dialog modal.',
-        ceoFeedback: ''
+        ceoFeedback: '',
+        deliverableContent: `# LAPORAN HASIL PEKERJAAN: VIRTUAL OFFICE 3D
+Disusun oleh: Lufas (Creative Director), L (Web Creator), Zenon (Motion Graphic)
+Perusahaan: DEKU AI COMPANY | CEO: Rahel
+Status Berkas: Siap Produksi / Deployment Vercel
+Tanggal Rilis: 23 November 2026
+
+============================================================
+1. RINGKASAN ARSITEKTUR 3D THREE.JS
+============================================================
+Kami telah merampungkan pembuatan seluruh antarmuka 3D isometrik dengan spesifikasi:
+- Inti "THE BRAIN": Floating octahedral crystal dengan 3 lapis cincin orbital torus neon sky-blue (#38bdf8) yang berputar dinamis.
+- 8 Ruangan Kubikel Modular:
+  * Dilengkapi meja kerja minimalis putih, kursi putar, monitor/laptop dengan layar berpendar.
+  * Tanaman mini hias, pot bunga pastel, dan partisi dinding semi-transparan.
+  * 8 Karakter mini 3D dengan warna khas masing-masing departemen.
+- Sistem Partikel Data: 600 partikel energi neon mengalir dari inti THE BRAIN menuju masing-masing ruangan karyawan.
+- Kamera Sinematik: Menggunakan Tween.js dengan transisi gliding halus saat CEO mengklik salah satu karakter.
+
+============================================================
+2. INTEGRASI SISTEM & KINERJA
+============================================================
+- File Sumber: D:/deku-ai-office/index.html
+- Frame Rate: Stabil 60 FPS di seluruh browser modern.
+- Kontrol: Mouse drag untuk orbit view, scroll untuk zoom, klik karakter untuk buka dialog instruksi.`
       },
       {
         id: 'tsk-102',
@@ -1037,7 +1126,31 @@
         deadline: 'Besok 12:00',
         assignedTo: ['asta'],
         deliverable: 'Laporan latensi di bawah 20ms dan uptime 99.9%.',
-        ceoFeedback: ''
+        ceoFeedback: '',
+        deliverableContent: `# AUDIT PERFORMA & OPTIMASI SERVER INFRASTRUKTUR
+Disusun oleh: Asta (IT Specialist & DevOps)
+Perusahaan: DEKU AI COMPANY | CEO: Rahel
+Status: Benchmark Selesai (Latency 12ms, Uptime 99.98%)
+
+============================================================
+1. METRIK KINERJA SERVER
+============================================================
+- Rata-rata Latensi API: 12ms (Target CEO: < 20ms) -> SUKSES ✓
+- CPU Load: 8.4% stabil
+- Memory Buffer: 32% (Redis in-memory caching aktif)
+- Database Pooling: PgBouncer connection pooler diaktifkan
+
+============================================================
+2. OPTIMASI QUERY & KEAMANAN
+============================================================
+1. Query Indexing:
+   - Menambahkan index pada kolom status tugas dan timestamp percakapan chat.
+2. In-Memory Caching:
+   - Menyimpan agregasi statistik dan profil karyawan di Redis dengan TTL dinamis.
+3. Security Layer:
+   - Rate limiting 100 req/menit per client IP untuk mencegah flood attack.
+
+YOSH! Seluruh infrastruktur server dan database aman terkendali 100%! Siap menampung lonjakan traffic kapan saja!`
       },
       {
         id: 'tsk-103',
@@ -1048,7 +1161,48 @@
         deadline: 'Lusa 15:00',
         assignedTo: ['ajeng', 'cahyara', 'dhani'],
         deliverable: 'Dokumen naskah + visual draft poster feed Instagram.',
-        ceoFeedback: ''
+        ceoFeedback: '',
+        deliverableContent: `# DOKUMEN COPYWRITING & MATERI KAMPANYE PROMOSI
+Disusun oleh: Ajeng (Head Copywriter), Cahyara (Illustrator), Dhani (Graphic Designer)
+Perusahaan: DEKU AI COMPANY | CEO: Rahel
+Status: Siap Distribusi Media Sosial (TikTok, Instagram, LinkedIn)
+
+============================================================
+1. 5 OPSI VIRAL HOOK VIDEO PENDEK (TIKTOK / REELS)
+============================================================
+[HOOK 1 - Gaya Penasaran]
+"Lu masih nyuruh karyawan nunggu berjam-jam cuma buat revisi konten? Di DEKU AI COMPANY, 8 divisi kerja barengan dalam hitungan detik. Liat nih..."
+
+[HOOK 2 - Gaya Provokatif Realistis]
+"Gaji tim agency puluhan juta tapi deadline molor terus? Kenalin kantor virtual AI masa depan yang beneran bisa kerja dan hasilin file nyata."
+
+[HOOK 3 - Gaya Storytelling POV]
+"POV: Lu jadi CEO dan punya tim desainer, copywriter, programmer, sampe video editor yang stand-by 24/7 di kantor 3D isometrik."
+
+[HOOK 4 - Gaya Solusi Masalah]
+"Kalau lu capek burnout ngurusin operasional bisnis sendirian, kantor virtual ini solusinya. Tinggal kasih arahan satu kalimat, file jadinya langsung kelar."
+
+[HOOK 5 - Gaya Tech Futuristik]
+"Ini bukan game, ini kantor virtual DEKU AI! Inti The Brain-nya ngendaliin 8 karyawan AI profesional secara real-time."
+
+============================================================
+2. NASKAH UTAMA & CALL TO ACTION (CTA)
+============================================================
+"Selamat datang di era baru produktivitas bisnis. DEKU AI COMPANY menghadirkan sistem Virtual Office 3D pertama dengan koordinasi multi-agen:
+- Tim Desain & Video langsung siapkan aset visual
+- Copywriter tulis naskah konversi tinggi
+- IT Specialist amankan server 24/7
+Semua terkontrol langsung dari smartphone CEO."
+
+CTA:
+"Klik link di bio sekarang untuk tour gratis kantor virtual DEKU AI dan rasakan sensasi memimpin tim masa depan!"
+
+============================================================
+3. SPESIFIKASI VISUAL (Dhani & Cahyara)
+============================================================
+- Feed Instagram: Rasio 1:1 (1080 x 1080 px) - Palet Dark Slate + Neon Sky Blue
+- Story / TikTok: Rasio 9:16 (1080 x 1920 px) - Tipografi Bold Grotesk
+- Karakter Maskot: Vektor karakter Cahyara di sudut kanan bawah dengan pose menunjuk CTA.`
       }
     ];
 
@@ -1115,6 +1269,15 @@
                 emp.systemPrompt = def.systemPrompt;
                 emp.humanPersona = def.humanPersona;
                 emp.dialog = def.dialog;
+              }
+            });
+          }
+          // Sinkronisasi berkas deliverable default ke tugas
+          if (Array.isArray(AppState.tasks)) {
+            AppState.tasks.forEach(task => {
+              const defTask = DEFAULT_TASKS.find(t => t.id === task.id);
+              if (defTask && !task.deliverableContent) {
+                task.deliverableContent = defTask.deliverableContent;
               }
             });
           }
@@ -1355,11 +1518,26 @@
               </div>
               <div class="p-2.5 rounded-xl bg-dark-950/70 border border-dark-700/60 text-xs">
                 <span class="text-[10px] text-slate-400 font-bold block uppercase">Hasil yang Diharapkan:</span>
-                <p class="text-slate-200 mt-0.5">${t.deliverable || '-'}</p>
+                <p class="text-slate-200 mt-0.5 font-medium">${t.deliverable || '-'}</p>
               </div>
               <div>
                 <span class="text-[10px] text-slate-400 font-bold block uppercase mb-1">Ditugaskan Kepada:</span>
                 <div class="flex flex-wrap gap-1.5">${assigneesHtml}</div>
+              </div>
+
+              <!-- Tombol Cek & Unduh Berkas Deliverable -->
+              <div class="pt-1">
+                ${t.deliverableContent ? `
+                  <button onclick="openDeliverableModal('${t.id}')" class="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                    <span>📄</span>
+                    <span>Lihat & Unduh Hasil Kerja (Berkas)</span>
+                  </button>
+                ` : `
+                  <button onclick="executeTaskAndProduceDeliverable('${t.id}')" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2">
+                    <span>⚡</span>
+                    <span>Minta Tim Buat & Hasilkan Berkas</span>
+                  </button>
+                `}
               </div>
             </div>
 
@@ -1373,9 +1551,13 @@
                   <button onclick="requestRevisionTask('${t.id}')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg">
                     Revisi
                   </button>
+                ` : t.status === 'selesai' ? `
+                  <span class="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                    <span>✓</span> Selesai
+                  </span>
                 ` : `
-                  <button onclick="markTaskComplete('${t.id}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg">
-                    Update Status
+                  <button onclick="markTaskComplete('${t.id}')" class="px-3 py-1 bg-dark-700 hover:bg-dark-600 text-slate-300 font-bold text-xs rounded-lg">
+                    Ajukan Review
                   </button>
                 `}
               </div>
@@ -1560,15 +1742,31 @@
           </div>
         `;
       } else {
-        container.innerHTML = msgs.map(m => `
-          <div class="flex ${m.sender === 'ceo' ? 'justify-end' : 'justify-start'}">
-            <div class="p-3 rounded-2xl max-w-sm ${m.sender === 'ceo' ? 'bg-indigo-600 text-white shadow-md' : 'bg-dark-900 text-slate-200 border border-slate-700/80'}">
-              <span class="text-[10px] font-bold block opacity-75 mb-0.5">${m.senderName || m.sender}</span>
-              <p class="whitespace-pre-wrap leading-relaxed">${m.text}</p>
-              <span class="text-[9px] opacity-60 block text-right mt-1">${m.time}</span>
+        container.innerHTML = msgs.map(m => {
+          const isCeo = m.sender === 'ceo';
+          const encodedText = encodeURIComponent(m.text);
+          return `
+            <div class="flex ${isCeo ? 'justify-end' : 'justify-start'} animate-fade-in">
+              <div class="p-3 rounded-2xl max-w-sm sm:max-w-md ${isCeo ? 'bg-indigo-600 text-white shadow-md' : 'bg-dark-900 text-slate-200 border border-slate-700/80 shadow'}">
+                <span class="text-[10px] font-bold block opacity-75 mb-0.5">${m.senderName || m.sender}</span>
+                <p class="whitespace-pre-wrap leading-relaxed">${m.text}</p>
+                <div class="flex items-center justify-between mt-2 pt-1 border-t ${isCeo ? 'border-indigo-400/30' : 'border-slate-800/80'} text-[9px] opacity-75">
+                  <span>${m.time}</span>
+                  ${!isCeo ? `
+                    <div class="flex items-center gap-2">
+                      <button onclick="copyChatText('${encodedText}', this)" class="hover:text-sky-300 flex items-center gap-0.5 transition-all">
+                        <span>📋</span><span>Salin</span>
+                      </button>
+                      <button onclick="downloadChatAsFile('${encodedText}', '${m.senderName || 'karyawan'}')" class="hover:text-emerald-300 flex items-center gap-0.5 transition-all">
+                        <span>💾</span><span>Unduh Berkas</span>
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
       container.scrollTop = container.scrollHeight;
     }
@@ -1785,14 +1983,20 @@
               </div>
             </div>
             <p class="text-xs text-slate-300 leading-relaxed">${rep.summary}</p>
-            <div class="p-3 bg-dark-950/80 rounded-xl border border-dark-700/60 flex items-center justify-between text-xs">
-              <span class="text-slate-400 font-mono text-[11px]">Deliverable: ${rep.deliverableLink}</span>
+            <div class="p-3 bg-dark-950/80 rounded-xl border border-dark-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span class="text-slate-400 font-mono text-[11px] truncate max-w-xs">Deliverable: ${rep.deliverableLink || 'Dokumen Hasil Kerja'}</span>
               <div class="flex items-center gap-2">
-                <button onclick="approveTask('${rep.taskId}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md">
-                  ✓ Setujui Laporan
+                <button onclick="openDeliverableModal('${rep.taskId}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all">
+                  <span>👁️</span><span>Periksa Berkas</span>
                 </button>
-                <button onclick="requestRevisionTask('${rep.taskId}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl">
-                  Minta Revisi
+                <button onclick="downloadReportDeliverable('${rep.taskId}', 'txt')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all">
+                  <span>📥</span><span>Unduh</span>
+                </button>
+                <button onclick="approveTask('${rep.taskId}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md">
+                  ✓ Setujui
+                </button>
+                <button onclick="requestRevisionTask('${rep.taskId}')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl">
+                  Revisi
                 </button>
               </div>
             </div>
@@ -2518,6 +2722,227 @@
         renderEmployeeDirectChat(agentId);
         saveState();
       }
+    }
+
+    // ================= DELIVERABLE VIEWER & DOWNLOAD SYSTEM =================
+    let currentViewingTaskId = null;
+
+    function openDeliverableModal(taskId) {
+      currentViewingTaskId = taskId;
+      const task = AppState.tasks.find(t => t.id === taskId);
+      if (!task) {
+        alert('Tugas tidak ditemukan.');
+        return;
+      }
+
+      if (!task.deliverableContent) {
+        task.deliverableContent = generateDefaultDeliverableText(task);
+        saveState();
+      }
+
+      const assignees = (task.assignedTo || []).map(id => AppState.employees.find(e => e.id === id)).filter(Boolean);
+      const authorsText = assignees.map(a => `${a.name} (${a.role})`).join(', ') || 'Tim DEKU';
+
+      document.getElementById('deliverable-modal-title').textContent = task.title;
+      document.getElementById('deliverable-modal-authors').textContent = `Dikerjakan oleh: ${authorsText}`;
+      document.getElementById('deliverable-modal-target').textContent = task.deliverable || task.desc;
+
+      const badgeEl = document.getElementById('deliverable-modal-badge');
+      if (badgeEl) {
+        badgeEl.textContent = (task.status || 'Selesai').replace('_', ' ').toUpperCase();
+        badgeEl.className = task.status === 'selesai'
+          ? 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+          : 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      }
+
+      document.getElementById('deliverable-modal-content').textContent = task.deliverableContent;
+
+      const actionsEl = document.getElementById('deliverable-modal-approval-actions');
+      if (actionsEl) {
+        if (task.status === 'selesai') {
+          actionsEl.innerHTML = `
+            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/60 rounded-xl border border-emerald-500/30">
+              <span>✓</span> Berkas Telah Disetujui CEO
+            </span>
+          `;
+        } else {
+          actionsEl.innerHTML = `
+            <button onclick="approveTask('${task.id}'); closeDeliverableModal();" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5">
+              <span>✓</span> Setujui Berkas Ini
+            </button>
+            <button onclick="requestRevisionTask('${task.id}'); closeDeliverableModal();" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition-all">
+              Minta Revisi
+            </button>
+          `;
+        }
+      }
+
+      document.getElementById('modal-deliverable-viewer').classList.remove('hidden');
+    }
+
+    function closeDeliverableModal() {
+      document.getElementById('modal-deliverable-viewer').classList.add('hidden');
+      currentViewingTaskId = null;
+    }
+
+    function copyDeliverableToClipboard() {
+      const content = document.getElementById('deliverable-modal-content')?.textContent || '';
+      if (!content) return;
+      navigator.clipboard.writeText(content).then(() => {
+        const btnText = document.getElementById('btn-copy-deliverable-text');
+        if (btnText) {
+          const old = btnText.textContent;
+          btnText.textContent = '✓ Berhasil Disalin!';
+          setTimeout(() => btnText.textContent = old, 2000);
+        }
+      });
+    }
+
+    function downloadCurrentDeliverable(ext = 'txt') {
+      if (!currentViewingTaskId) return;
+      const task = AppState.tasks.find(t => t.id === currentViewingTaskId);
+      if (!task || !task.deliverableContent) return;
+
+      const safeTitle = (task.title || 'deliverable').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      const filename = `[DEKU-AI]_${safeTitle}.${ext}`;
+      downloadTextAsFile(filename, task.deliverableContent, ext === 'md' ? 'text/markdown' : 'text/plain');
+    }
+
+    function downloadReportDeliverable(taskId, ext = 'txt') {
+      const task = AppState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (!task.deliverableContent) {
+        task.deliverableContent = generateDefaultDeliverableText(task);
+        saveState();
+      }
+      const safeTitle = (task.title || 'deliverable').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      const filename = `[DEKU-AI]_${safeTitle}.${ext}`;
+      downloadTextAsFile(filename, task.deliverableContent, ext === 'md' ? 'text/markdown' : 'text/plain');
+    }
+
+    function downloadTextAsFile(filename, content, mimeType = 'text/plain') {
+      const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function generateDefaultDeliverableText(task) {
+      const assignees = (task.assignedTo || []).map(id => AppState.employees.find(e => e.id === id)).filter(Boolean);
+      const authorNames = assignees.map(a => `${a.name} (${a.role})`).join(', ') || 'Tim DEKU';
+      return `# DOKUMEN HASIL KERJA RESMI
+Judul Tugas: ${task.title}
+Deskripsi: ${task.desc}
+Disusun Oleh: ${authorNames}
+Perusahaan: ${AppState.company.name} | CEO: ${AppState.company.ceo}
+Batas Waktu: ${task.deadline}
+
+============================================================
+1. TARGET DELIVERABLE
+============================================================
+${task.deliverable || 'Sesuai arahan CEO'}
+
+============================================================
+2. HASIL EKSEKUSI & DOKUMEN KERJA
+============================================================
+Pekerjaan telah dirampungkan oleh tim pelaksana sesuai standar kualitas DEKU AI COMPANY.
+Seluruh aset, naskah, kode, atau konfigurasi telah ditinjau dan siap digunakan untuk kebutuhan operasional perusahaan.
+
+Catatan Tim:
+"Instruksi CEO telah kami selesaikan dengan optimal. Silakan unduh atau setujui berkas ini."`;
+    }
+
+    async function executeTaskAndProduceDeliverable(taskId) {
+      const task = AppState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const assignees = (task.assignedTo || []).map(id => AppState.employees.find(e => e.id === id)).filter(Boolean);
+      const lead = assignees[0] || AppState.employees[0];
+      const teamStr = assignees.map(a => `${a.name} (${a.role})`).join(', ');
+
+      const confirmRun = confirm(`Minta tim (${teamStr}) untuk mengerjakan tugas "${task.title}" dan menghasilkan berkas sekarang?`);
+      if (!confirmRun) return;
+
+      task.status = 'sedang_dikerjakan';
+      saveState();
+      renderTasksList();
+
+      if (AppState.apiKey && lead) {
+        try {
+          const userPrompt = `CEO ${AppState.company.ceo} memberikan tugas:
+Judul: "${task.title}"
+Deskripsi: "${task.desc}"
+Hasil yang diharapkan: "${task.deliverable}"
+Tim pelaksana: ${teamStr}
+
+Susunlah DOKUMEN HASIL KERJA NYATA (DELIVERABLE) yang lengkap, profesional, dan siap pakai.
+Sertakan struktur rapi: Judul, Tim Penyusun, Ringkasan Eksekutif, Rincian Hasil Kerja (naskah copywriting lengkap / kode program / spesifikasi desain / audit teknis sesuai peran tim), dan Rekomendasi Langkah Selanjutnya.`;
+
+          const generatedResult = await callEmployeeAI(lead, userPrompt, [], 'task_deliverable');
+          task.deliverableContent = generatedResult;
+        } catch (e) {
+          console.warn('AI generation error, using fallback template', e);
+          task.deliverableContent = generateDefaultDeliverableText(task);
+        }
+      } else {
+        await new Promise(r => setTimeout(r, 600));
+        task.deliverableContent = generateDefaultDeliverableText(task);
+      }
+
+      task.status = 'menunggu_approval';
+
+      // Buat laporan otomatis di Tab Laporan
+      const existingRep = AppState.reports.find(r => r.taskId === task.id);
+      if (!existingRep) {
+        AppState.reports.unshift({
+          id: `rep-${Date.now()}`,
+          taskId: task.id,
+          taskTitle: task.title,
+          submittedBy: lead.id,
+          date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          status: 'Menunggu Persetujuan',
+          summary: `Tim ${teamStr} telah merampungkan tugas "${task.title}" dan melampirkan berkas hasil kerja untuk ditinjau oleh CEO.`,
+          deliverableLink: `Berkas [DEKU-AI]_${task.title.slice(0, 25)}.txt`
+        });
+      }
+
+      AppState.activities.unshift({
+        id: Date.now(),
+        text: `${lead.name} dan tim mengajukan berkas hasil kerja untuk "${task.title}".`,
+        time: 'Baru saja',
+        type: 'report'
+      });
+
+      saveState();
+      renderTasksList();
+      renderReportsList();
+      renderDashboard();
+
+      alert(`✓ BERHASIL! Tim telah menyelesaikan tugas "${task.title}" dan menghasilkan berkas kerja. Jendela peninjau berkas akan terbuka.`);
+      openDeliverableModal(task.id);
+    }
+
+    function copyChatText(rawText, btnEl) {
+      const text = decodeURIComponent(rawText);
+      navigator.clipboard.writeText(text).then(() => {
+        if (btnEl) {
+          const old = btnEl.innerHTML;
+          btnEl.innerHTML = '<span>✓</span><span>Tersalin</span>';
+          setTimeout(() => btnEl.innerHTML = old, 1500);
+        }
+      });
+    }
+
+    function downloadChatAsFile(rawText, senderName) {
+      const text = decodeURIComponent(rawText);
+      const safeName = (senderName || 'karyawan').replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `[DEKU-CHAT]_${safeName}_${Date.now()}.txt`;
+      downloadTextAsFile(filename, text, 'text/plain');
     }
 
     // ================= HUMAN WORKPLACE CONVERSATION SYSTEM =================
