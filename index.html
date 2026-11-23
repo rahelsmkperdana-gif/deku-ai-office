@@ -920,15 +920,23 @@
         <div class="flex flex-wrap items-center gap-2">
           <button onclick="copyDeliverableToClipboard()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 shadow">
             <span>📋</span>
-            <span id="btn-copy-deliverable-text">Salin Isi Berkas</span>
+            <span id="btn-copy-deliverable-text">Salin Isi</span>
           </button>
           <button onclick="downloadCurrentDeliverable('txt')" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
             <span>💾</span>
-            <span>Unduh Berkas (.txt)</span>
+            <span>Unduh (.txt)</span>
           </button>
-          <button onclick="downloadCurrentDeliverable('md')" class="px-3 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
-            <span>📝</span>
-            <span>Unduh (.md)</span>
+          <button id="btn-modal-dl-png" onclick="downloadVisualAsPNG()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <span>🖼️</span>
+            <span>Unduh Gambar (.PNG)</span>
+          </button>
+          <button id="btn-modal-dl-html" onclick="downloadCurrentDeliverable('html')" class="px-3 py-2 bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <span>🌐</span>
+            <span>Unduh Web (.html)</span>
+          </button>
+          <button id="btn-modal-dl-csv" onclick="downloadCurrentDeliverable('csv')" class="px-3 py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <span>📊</span>
+            <span>Unduh Data (.csv)</span>
           </button>
         </div>
 
@@ -3014,8 +3022,13 @@ CTA:
                   <br><br>
                   <span class="text-sky-400 font-semibold">#DekuAIOffice #VirtualOffice #AICompany #BisnisMasaDepan #StartupIndonesia</span>
                 </p>
-                <div class="pt-2 flex justify-end">
-                  <button onclick="copyMockupCaption()" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] rounded-lg shadow flex items-center gap-1">
+                <!-- Tombol Unduh Gambar Asli Langsung -->
+                <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-between items-center">
+                  <button onclick="downloadVisualAsPNG('[DEKU-AI]_Poster_Instagram.png')" class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-black text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
+                    <span>🖼️</span>
+                    <span>Unduh Gambar Poster Asli (.PNG)</span>
+                  </button>
+                  <button onclick="copyMockupCaption()" class="w-full sm:w-auto px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5">
                     <span>📋</span><span id="btn-copy-caption-text">Salin Naskah & Hook</span>
                   </button>
                 </div>
@@ -3143,8 +3156,172 @@ CTA:
       if (!task || !task.deliverableContent) return;
 
       const safeTitle = (task.title || 'deliverable').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      let content = task.deliverableContent;
+      let mime = 'text/plain';
+
+      if (ext === 'html') {
+        mime = 'text/html';
+        if (!content.includes('<!DOCTYPE html>')) {
+          content = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${task.title} - DEKU AI COMPANY</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
+</head>
+<body class="bg-slate-950 text-slate-100 p-6 sm:p-12 font-sans">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <div class="border-b border-slate-800 pb-5">
+      <span class="text-xs uppercase px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold border border-indigo-500/30">DEKU AI COMPANY • HASIL KERJA RESMI</span>
+      <h1 class="text-3xl font-black text-white mt-3">${task.title}</h1>
+      <p class="text-slate-400 mt-1">${task.desc}</p>
+    </div>
+    <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 whitespace-pre-wrap leading-relaxed text-sm font-mono text-slate-200">
+${task.deliverableContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+    </div>
+    <footer class="text-center text-xs text-slate-500 pt-8 border-t border-slate-800">
+      Dibuat secara otomatis oleh Tim Karyawan DEKU AI COMPANY untuk CEO Rahel
+    </footer>
+  </div>
+</body>
+</html>`;
+        }
+      } else if (ext === 'csv') {
+        mime = 'text/csv';
+        if (task.id === 'tsk-102') {
+          content = `"Metrik","Nilai","Status","Keterangan"
+"API Latency","12ms","Optimal","Target CEO < 20ms"
+"Server Uptime","99.98%","Aktif","30 Hari Terakhir"
+"Redis Cache Hit","94.2%","Tinggi","In-Memory Store"
+"CPU Load Average","8.4%","Rendah","Hemat Daya"
+"Memory Usage","32%","Stabil","Buffer Cache OK"
+"Database Pool","8/100","Normal","PgBouncer Terkoneksi"
+"Rate Limiting","100 req/min","Enforced","Proteksi Keamanan"`;
+        } else {
+          content = `"Properti","Keterangan"
+"Judul Tugas","${task.title}"
+"Deskripsi","${task.desc}"
+"Status","${task.status}"
+"Batas Waktu","${task.deadline}"
+"Hasil Deliverable","${task.deliverable || ''}"`;
+        }
+      } else if (ext === 'md') {
+        mime = 'text/markdown';
+      }
+
       const filename = `[DEKU-AI]_${safeTitle}.${ext}`;
-      downloadTextAsFile(filename, task.deliverableContent, ext === 'md' ? 'text/markdown' : 'text/plain');
+      downloadTextAsFile(filename, content, mime);
+    }
+
+    function downloadVisualAsPNG(filename = '[DEKU-AI]_Poster_Instagram.png') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+
+      // Background Gradient
+      const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+      grad.addColorStop(0, '#0b1120');
+      grad.addColorStop(0.4, '#1e1b4b');
+      grad.addColorStop(1, '#0369a1');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1080);
+
+      // Cyber Grid Accent
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 1080; i += 60) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 1080);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(1080, i);
+        ctx.stroke();
+      }
+
+      // Outer Neon Frame
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(50, 50, 980, 980);
+
+      // Top Tag Badge
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.fillRect(100, 100, 480, 60);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(100, 100, 480, 60);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('⚡ REVOLUSI PRODUKTIVITAS 2026', 120, 140);
+
+      // Big Spark
+      ctx.font = '70px sans-serif';
+      ctx.fillText('🚀', 890, 155);
+
+      // Headline Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 50px sans-serif';
+      const headline = document.getElementById('mockup-headline')?.textContent || '"Kantor Virtual AI Masa Depan"';
+      wrapText(ctx, headline.replace(/"/g, ''), 100, 320, 880, 68);
+
+      // Subheadline
+      ctx.fillStyle = '#bae6fd';
+      ctx.font = '500 30px sans-serif';
+      ctx.fillText('Di DEKU AI COMPANY, 8 Divisi Eksekusi Tugas Barengan!', 100, 540);
+
+      // Feature Card
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.fillRect(100, 620, 880, 240);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeRect(100, 620, 880, 240);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('🏢 8 Divisi Karyawan AI Stand-by 24/7:', 140, 680);
+      ctx.font = '24px sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('• IT & Server (Asta)  • UI/UX Visual (Lufas)  • Web Creator (L)', 140, 735);
+      ctx.fillText('• Copywriter (Ajeng)  • Video Motion (Zenon)  • Illustrator (Cahyara)', 140, 785);
+      ctx.fillText('• Graphic Design (Dhani)  • Project Manager (Midoriya)', 140, 835);
+
+      // Bottom CTA Banner
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(100, 900, 880, 75);
+      ctx.fillStyle = '#0b1120';
+      ctx.font = '900 28px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('KUNJUNGI: DEKU-AI-OFFICE.VERCEL.APP ↗', 540, 948);
+      ctx.textAlign = 'left';
+
+      // Trigger PNG download
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
     }
 
     function downloadReportDeliverable(taskId, ext = 'txt') {
