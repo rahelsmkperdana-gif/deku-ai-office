@@ -1,6 +1,9 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/virtual-office", "destination": "/virtual-office.html" },
+    { "source": "/virtual-office.html", "destination": "/virtual-office.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
